@@ -1,8 +1,51 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Image, TouchableOpacity, StyleSheet, Text, ScrollView } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
+import { auth, firestore } from '../Config/firebaseconfig';
 
 export default function ManagerHome({ navigation }) {
+  const [agendamentos, setAgendamentos] = useState([]);
+  const [barbeiroLogado, setBarbeiroLogado] = useState(null);
+
+  useEffect(() => {
+    const fetchCurrentUser = () => {
+      try {
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          setBarbeiroLogado(currentUser.uid); // Armazena o ID do usuário logado
+        } else {
+          console.log('Nenhum usuário está logado');
+        }
+      } catch (error) {
+        console.error('Erro ao obter o usuário atual:', error);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
+
+  useEffect(() => {
+    if (barbeiroLogado) {
+      const fetchAgendamentos = async () => {
+        try {
+          const agendamentoRef = firestore.collection('agendamento');
+          const snapshot = await agendamentoRef.where('barbeiro', '==', barbeiroLogado).get();
+
+          const agendamentosData = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+
+          setAgendamentos(agendamentosData);
+        } catch (error) {
+          console.error('Erro ao buscar os agendamentos:', error);
+        }
+      };
+
+      fetchAgendamentos();
+    }
+  }, [barbeiroLogado]);
+
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       {/* Banner */}
@@ -17,25 +60,18 @@ export default function ManagerHome({ navigation }) {
       {/* Conteúdo Principal */}
       <View style={styles.container}>
         <View style={styles.content}>
-          {/* Formulário */}
-          <View style={styles.formContainer}>
-            <Image
-              source={{ uri: 'https://lh3.googleusercontent.com/p/AF1QipPe9P-vkmj_zpBaanW6BuB6omZHkWTDTpnWqk95=s680-w680-h510' }}
-              style={styles.imagemesa}
-            />
-            <Text style={styles.addressText}>
-              <FontAwesome5 name="map-marker-alt" size={16} color="#b69045" /> R. Dr José de Patta, 471 - Centro, Criciúma - SC, 88802-240
-            </Text>
-            <Text style={styles.centeredText}>
-              BARBEIRO 
-            </Text>
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Agendamento')}>
-              <Text style={styles.buttonText}>Agendar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Horario')}>
-              <Text style={styles.buttonText}>Ver agendamentos</Text>
-            </TouchableOpacity>
-          </View>
+          {/* Lista de Agendamentos */}
+          {agendamentos.length > 0 ? (
+            agendamentos.map((agendamento) => (
+              <View key={agendamento.id} style={styles.agendamentoContainer}>
+                <Text style={styles.agendamentoText}>Data: {agendamento.data}</Text>
+                <Text style={styles.agendamentoText}>Horário: {agendamento.horario}</Text>
+                <Text style={styles.agendamentoText}>Serviço: {agendamento.servico}</Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noAgendamentoText}>Nenhum agendamento encontrado.</Text>
+          )}
         </View>
 
         {/* Rodapé */}
@@ -66,6 +102,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  agendamentoContainer: {
+    marginBottom: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#b69045',
+    borderRadius: 10,
+    backgroundColor: '#fff',
+  },
+  agendamentoText: {
+    color: '#000',
+  },
+  noAgendamentoText: {
+    color: '#b69045',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 20,
+  },
   banner: {
     width: '100%',
     backgroundColor: '#000000',
@@ -91,53 +144,6 @@ const styles = StyleSheet.create({
     width: '90%',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  formContainer: {
-    width: '100%',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#b69045',
-    borderRadius: 10,
-    padding: 25,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 5,
-  },
-  imagemesa: {
-    width: 220,
-    height: 140,
-    borderRadius: 10,
-    resizeMode: 'cover',
-  },
-  addressText: {
-    textAlign: 'center',
-    marginTop: 15,
-    fontSize: 14,
-    color: '#b69045',
-  },
-  centeredText: {
-    textAlign: 'center',
-    fontSize: 30,
-    fontWeight: 'bold',
-    marginTop: 25,
-    color: '#b69045',
-  },
-  button: {
-    marginTop: 20,
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: '#b69045',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-  },
-  buttonText: {
-    color: '#b69045',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   footer: {
     marginTop: 30,

@@ -8,26 +8,32 @@ import { getFirestore, doc, setDoc } from 'firebase/firestore';
 export default function Cadastrar() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [telefone, setTelefone] = useState('');
+  const [endereco, setEndereco] = useState('');
   const navigation = useNavigation();
   const db = getFirestore(); // Obter a instância do Firestore
 
   const NovoUsuario = async () => {
-    if (!email || !password) {
+    if (!email || !password || !name || !telefone || !endereco) { // Verifica se todos os campos estão preenchidos
       Alert.alert('Erro', 'Por favor, preencha todos os campos.');
       return;
     }
-
+  
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       console.log('User registered:', userCredential.user);
-
+  
       // Salvar dados adicionais do usuário no Firestore
       const userRef = doc(db, 'cliente', userCredential.user.uid); // 'cliente' é o nome da coleção
       await setDoc(userRef, {
-        email: userCredential.user.email,
-        role: 'user' // ou qualquer outro campo adicional que você precise
+        nome: name, // Obtém o valor diretamente do estado
+        endereco: endereco, // Obtém o valor diretamente do estado
+        telefone: telefone, // Obtém o valor diretamente do estado
+        email: email, // Obtém o valor diretamente do estado
+        role: 'user' // Campo adicional
       });
-
+  
       Alert.alert('Sucesso', 'Conta criada com sucesso!');
       navigation.navigate('Login');
     } catch (error) {
@@ -35,6 +41,7 @@ export default function Cadastrar() {
       Alert.alert('Erro', error.message);
     }
   };
+  
 
   return (
     <View style={styles.container}>
@@ -70,6 +77,30 @@ export default function Cadastrar() {
               placeholderTextColor="rgba(182, 144, 69, 0.5)"
               onChangeText={setPassword}
               value={password}
+              secureTextEntry
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Nome"
+              placeholderTextColor="rgba(182, 144, 69, 0.5)"
+              onChangeText={setName}
+              value={name}
+              secureTextEntry
+            />
+                        <TextInput
+              style={styles.input}
+              placeholder="Endereço"
+              placeholderTextColor="rgba(182, 144, 69, 0.5)"
+              onChangeText={setEndereco}
+              value={endereco}
+              secureTextEntry
+            />
+                        <TextInput
+              style={styles.input}
+              placeholder="Telefone"
+              placeholderTextColor="rgba(182, 144, 69, 0.5)"
+              onChangeText={setTelefone}
+              value={telefone}
               secureTextEntry
             />
             <TouchableOpacity style={styles.signUpButton} onPress={NovoUsuario}>
@@ -126,9 +157,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   formContainer: {
-    width: '90%',
+    width: '60%',
     alignSelf: 'center',
-    marginTop: 20,
+    marginTop: 100,
   },
   title: {
     fontSize: 24,

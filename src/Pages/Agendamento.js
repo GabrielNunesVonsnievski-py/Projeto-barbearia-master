@@ -40,12 +40,15 @@ export default function Agendamento({ navigation }) {
   const [local, setLocal] = useState('local1');
   const [data, setData] = useState(dayjs());
   const [hora, setHora] = useState('');
+  
 
   useEffect(() => {
     const fetchBarbeiros = async () => {
       try {
-        const barbeiroCollection = collection(database, "barbeiro");
-        const querySnapshot = await getDocs(barbeiroCollection);
+        // Consulta na coleção 'cliente' para pegar apenas os que têm 'role' igual a 'barbeiro'
+        const clienteCollection = collection(database, "cliente");
+        const barbeiroQuery = query(clienteCollection, where("role", "==", "barbeiro"));
+        const querySnapshot = await getDocs(barbeiroQuery);
         const barbeirosList = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()

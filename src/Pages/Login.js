@@ -10,20 +10,20 @@ export default function Login({ navigation }) {
 
   const LoginUser = async () => {
     try {
-      // Verificar se os campos estão preenchidos
+      //campos preenchidos
       if (!email || !password) {
         Alert.alert('Erro', 'Por favor, preencha todos os campos.');
         return;
       }
 
-      // Tentar fazer o login
+      //fazer login
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       console.log('User logged in:', user);
 
-      // Buscar dados do usuário do Firestore
+      //usuário no Firestore
       const db = getFirestore();
-      const userDocRef = doc(db, 'cliente', user.uid); // Verifique o nome da coleção
+      const userDocRef = doc(db, 'cliente', user.uid); 
       const userDoc = await getDoc(userDocRef);
 
       if (userDoc.exists()) {
