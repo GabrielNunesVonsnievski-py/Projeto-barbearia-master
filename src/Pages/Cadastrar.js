@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Image, TextInput, TouchableOpacity, StyleSheet, Text, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { auth } from '../Config/firebaseconfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import Loading from './Loading';
 
 export default function Cadastrar() {
+  const [isLoading, setIsLoading] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -14,8 +16,14 @@ export default function Cadastrar() {
   const navigation = useNavigation();
   const db = getFirestore(); // Obter a instância do Firestore
 
+  useEffect(() => {
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+  }, []);
+
   const NovoUsuario = async () => {
-    if (!email || !password || !name || !telefone || !endereco) { // Verifica se todos os campos estão preenchidos
+    if (!email || !password || !name || !telefone || !endereco) {
       Alert.alert('Erro', 'Por favor, preencha todos os campos.');
       return;
     }
@@ -25,13 +33,13 @@ export default function Cadastrar() {
       console.log('User registered:', userCredential.user);
   
       // Salvar dados adicionais do usuário no Firestore
-      const userRef = doc(db, 'cliente', userCredential.user.uid); // 'cliente' é o nome da coleção
+      const userRef = doc(db, 'cliente', userCredential.user.uid);
       await setDoc(userRef, {
-        nome: name, // Obtém o valor diretamente do estado
-        endereco: endereco, // Obtém o valor diretamente do estado
-        telefone: telefone, // Obtém o valor diretamente do estado
-        email: email, // Obtém o valor diretamente do estado
-        role: 'user' // Campo adicional
+        nome: name,
+        endereco: endereco,
+        telefone: telefone,
+        email: email,
+        role: 'user'
       });
   
       Alert.alert('Sucesso', 'Conta criada com sucesso!');
@@ -41,7 +49,10 @@ export default function Cadastrar() {
       Alert.alert('Erro', error.message);
     }
   };
-  
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <View style={styles.container}>
@@ -87,7 +98,7 @@ export default function Cadastrar() {
               value={name}
               secureTextEntry
             />
-                        <TextInput
+            <TextInput
               style={styles.input}
               placeholder="Endereço"
               placeholderTextColor="rgba(182, 144, 69, 0.5)"
@@ -95,7 +106,7 @@ export default function Cadastrar() {
               value={endereco}
               secureTextEntry
             />
-                        <TextInput
+            <TextInput
               style={styles.input}
               placeholder="Telefone"
               placeholderTextColor="rgba(182, 144, 69, 0.5)"

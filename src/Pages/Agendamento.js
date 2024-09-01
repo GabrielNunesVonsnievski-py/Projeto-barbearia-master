@@ -4,12 +4,21 @@ import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
 import { database, auth, collection, addDoc, query, where, getDocs } from "../Config/firebaseconfig";
+import Loading from './Loading';
 
 export default function Agendamento({ navigation }) {
+
+  const [isLoading, setIsLoading] = useState(true);
   const [date, setDate] = useState(new Date());
   const [time, setTime] = useState(new Date()); // Novo estado para a hora
   const [showDate, setShowDate] = useState(false);
   const [showTime, setShowTime] = useState(false); // Novo estado para mostrar o picker de hora
+
+  useEffect(() => {
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 2000); // 2 segundos de delay que o marcos não gosta
+  }, []);
 
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
@@ -144,6 +153,10 @@ export default function Agendamento({ navigation }) {
       return false;
     }
   };
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>

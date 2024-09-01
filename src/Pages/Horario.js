@@ -4,11 +4,19 @@ import { collection, onSnapshot, query,where } from 'firebase/firestore';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { signOut } from "firebase/auth";
 import { database, auth , doc , deleteDoc} from "../Config/firebaseconfig";
+import Loading from './Loading';
 
 
 export default function Horario ({navigation}){
+
+    const [isLoading, setIsLoading] = useState(true);
     const [horario, setHorario] = useState([])
    
+    useEffect(() => {
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 2000); // 2 segundos de delay que o marcos não gosta
+      }, []);
 
     useEffect(() => {
         const user = auth.currentUser;
@@ -46,6 +54,10 @@ export default function Horario ({navigation}){
         }
     };
 
+    if (isLoading) {
+        return <Loading />;
+    }
+    
     return(
         <SafeAreaView style={styles.container}>
           <FlatList

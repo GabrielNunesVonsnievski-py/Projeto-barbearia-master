@@ -1,12 +1,21 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { database, doc, updateDoc } from "../Config/firebaseconfig";
+import Loading from './Loading';
 
 export default function Details({ navigation, route }) {
 
+    const [isLoading, setIsLoading] = useState(true);
     const [horarioEdit, setHorarioEdit] = useState(route.params.hora);
     const [dataEdit, setdataEdit] = useState(route.params.data);
     const idagendamento = route.params.id;
+
+    useEffect(() => {
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 2000); // 2 segundos de delay que o marcos não gosta
+      }, []);
+    
 
     function editHorario(hora, id, data) {
         const HorarioDocRef = doc(database, "agendamento", id);
@@ -29,6 +38,12 @@ export default function Details({ navigation, route }) {
                 console.error("Erro ao atualizar horário:", error);
             });
     }
+
+
+    if (isLoading) {
+        return <Loading />;
+    }
+    
 
     return (
         <View style={styles.container}>

@@ -1,8 +1,22 @@
-import React from 'react';
+import React , {useState, useEffect } from 'react';
 import { View, Image, TouchableOpacity, StyleSheet, Text, ScrollView } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
+import Loading from './Loading';
 
 export default function Home({ navigation }) {
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 2000); // 2 segundos de delay que o marcos não gosta
+  }, []);
+
+  if (isLoading) {
+    return <Loading />;
+  }
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>

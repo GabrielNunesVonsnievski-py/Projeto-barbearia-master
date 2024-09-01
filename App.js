@@ -11,6 +11,7 @@ import Home from './src/Pages/Home';
 import Details from './src/Pages/Details';
 import ManagerHome from './src/Pages/ManagerHome';
 import BarbeiroHome from './src/Pages/BarbeiroHome';
+import Loading from './src/Pages/Loading';
 
 export default function App() { 
   const Stack = createStackNavigator();
@@ -40,6 +41,7 @@ export default function App() {
       <Stack.Screen name='Details' component={Details} />
       <Stack.Screen name='ManagerHome' component={ManagerHome} />
       <Stack.Screen name='BarbeiroHome' component={BarbeiroHome} />
+      <Stack.Screen name='Loading' component={Loading} />
       </Stack.Navigator>
     </NavigationContainer>
   );
