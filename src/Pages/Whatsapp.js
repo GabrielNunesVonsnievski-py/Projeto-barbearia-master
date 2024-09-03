@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, TextInput, View, StyleSheet, Linking, error } from 'react-native';
+import { Button, TextInput, View, StyleSheet, Linking } from 'react-native';
 import { database, auth, collection, addDoc, query, where, getDocs } from "../Config/firebaseconfig";
 
 const WhatsApp = () => {
@@ -8,9 +8,9 @@ const WhatsApp = () => {
 
   const openWhatsApp = (phoneNumber, message) => {
     let url = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
-
+    
     Linking.openURL(url).catch((err) => {
-      console.error("Não foi possível abrir o WhatsApp", error);
+      console.error("Não foi possível abrir o WhatsApp", err);
     });
   };
 
