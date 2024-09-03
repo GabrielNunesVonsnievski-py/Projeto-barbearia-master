@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { View, Image, TouchableOpacity, StyleSheet, Text, ScrollView } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { auth, firestore } from '../Config/firebaseconfig';
+import { auth, database, firestore, getDocs} from '../Config/firebaseconfig';
 import Loading from './Loading';
+import {collection, query, where} from 'firebase/firestore';
 
 export default function ManagerHome({ navigation }) {
 
   const [isLoading, setIsLoading] = useState(true);
   const [agendamentos, setAgendamentos] = useState([]);
   const [barbeiroLogado, setBarbeiroLogado] = useState(null);
+  const [nomebarbeiro, setNomebarbeiro] = useState([]);
+
+  const useBarbeirosRef = collection(database, "barbeiro");
+  const useAgendamentosRef = collection(database, "agendamento");
+  const [barbeiros, setBarbeiros] = useState([]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -21,7 +27,7 @@ export default function ManagerHome({ navigation }) {
       try {
         const currentUser = auth.currentUser;
         if (currentUser) {
-          setBarbeiroLogado(currentUser.uid); // Armazena o ID do usuário logado
+          setBarbeiroLogado(currentUser.uid); // armazena o ID do usuario q ta logado
         } else {
           console.log('Nenhum usuário está logado');
         }
@@ -31,29 +37,37 @@ export default function ManagerHome({ navigation }) {
     };
 
     fetchCurrentUser();
+    getBarbeiros();
+
   }, []);
 
+  const getBarbeiros = async () => {
+    try {
+      const dataBarbeiros = await getDocs(useBarbeirosRef);
+      const Lbarbeiros = dataBarbeiros.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      }));
+      setBarbeiros(Lbarbeiros);
+      console.log(Lbarbeiros)
+    } catch (error) {
+      console.error("Erro ao buscar Rotas: ", error);
+    } 
+  };
+
   useEffect(() => {
-    if (barbeiroLogado) {
-      const fetchAgendamentos = async () => {
-        try {
-          const agendamentoRef = firestore.collection('agendamento');
-          const snapshot = await agendamentoRef.where('barbeiro', '==', barbeiroLogado).get();
+    const getAgendamentos = async () => {
+      const q = query(useAgendamentosRef, where('barbeiro', '==', barbeiros[0].nome));
+      const agendamentosData = await getDocs(q);
+      const agendamentoList = agendamentosData.docs.map((doc) => ({
+        ...doc.data(),
+      }));
+      setAgendamentos(agendamentoList);
+      console.log(agendamentoList);
+    };
+    getAgendamentos();
+  }, []);
 
-          const agendamentosData = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-
-          setAgendamentos(agendamentosData);
-        } catch (error) {
-          console.error('Erro ao buscar os agendamentos:', error);
-        }
-      };
-
-      fetchAgendamentos();
-    }
-  }, [barbeiroLogado]);
 
   if (isLoading) {
     return <Loading />;
@@ -83,11 +97,11 @@ export default function ManagerHome({ navigation }) {
               </View>
             ))
           ) : (
-            <Text style={styles.noAgendamentoText}>Nenhum agendamento encontrado.</Text>
+            <Text style={styles.noAgendamentoText}>Nenhum agendamento encontrado</Text>
           )}
         </View>
 
-        {/* Rodapé */}
+        {/* blg de baixo */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
             <FontAwesome5 name="phone" size={14} color="#b69045" /> (48) 99933-2071
