@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, Tex
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
-import { database, auth, collection, addDoc, query, where, getDocs } from "../Config/firebaseconfig";
+import { database, auth, collection, addDoc, query, where, getDocs, updateDoc } from "../Config/firebaseconfig";
 import Loading from './Loading';
 
 export default function Agendamento({ navigation }) {
@@ -26,6 +26,8 @@ export default function Agendamento({ navigation }) {
       setDate(currentDate);
       setShowDate(Platform.OS === 'ios'); // Para iOS, mantém o picker aberto
       setData(dayjs(currentDate).format('YYYY-MM-DD')); // Armazenando a data formatada no estado
+
+      setTime(new Date(currentDate)); //Se n tiver isso, dps de voce escolher o dia n é mais possivel alterar a hora. Como? n sei
     } else if (showTime) {
       setTime(currentDate);
       setShowTime(Platform.OS === 'ios'); // Para iOS, mantém o picker aberto
@@ -122,8 +124,7 @@ export default function Agendamento({ navigation }) {
         data: data,    
         horario: hora,  
         idUser: user.uid,
-      });
-      
+      })
 
       Alert.alert(
         'Agendamento Confirmado!',

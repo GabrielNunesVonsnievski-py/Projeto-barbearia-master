@@ -94,6 +94,7 @@ export default function ManagerHome({ navigation }) {
                 <Text style={styles.agendamentoText}>Data: {agendamento.data}</Text>
                 <Text style={styles.agendamentoText}>Horário: {agendamento.horario}</Text>
                 <Text style={styles.agendamentoText}>Serviço: {agendamento.servico}</Text>
+                <Text style={styles.agendamentoText}></Text>
               </View>
             ))
           ) : (

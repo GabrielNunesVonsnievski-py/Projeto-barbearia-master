@@ -47,6 +47,9 @@ export default function Home({ navigation }) {
           <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Horario')}>
             <Text style={styles.buttonText}>Ver agendamentos</Text>
           </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('WhatsApp')}>
+            <Text style={styles.button}>Abrir WhatsApp</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
