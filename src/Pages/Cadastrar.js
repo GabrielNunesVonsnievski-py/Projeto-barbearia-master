@@ -96,7 +96,6 @@ export default function Cadastrar() {
               placeholderTextColor="rgba(182, 144, 69, 0.5)"
               onChangeText={setName}
               value={name}
-              secureTextEntry
             />
             <TextInput
               style={styles.input}
@@ -104,7 +103,6 @@ export default function Cadastrar() {
               placeholderTextColor="rgba(182, 144, 69, 0.5)"
               onChangeText={setEndereco}
               value={endereco}
-              secureTextEntry
             />
             <TextInput
               style={styles.input}
@@ -112,7 +110,6 @@ export default function Cadastrar() {
               placeholderTextColor="rgba(182, 144, 69, 0.5)"
               onChangeText={setTelefone}
               value={telefone}
-              secureTextEntry
             />
             <TouchableOpacity style={styles.signUpButton} onPress={NovoUsuario}>
               <Text style={styles.buttonText}>Cadastrar</Text>

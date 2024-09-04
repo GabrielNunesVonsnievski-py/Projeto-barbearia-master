@@ -12,7 +12,10 @@ export default function ManagerHome({ navigation }) {
   const [barbeiroLogado, setBarbeiroLogado] = useState(null);
   const [nomebarbeiro, setNomebarbeiro] = useState([]);
 
-  const useBarbeirosRef = collection(database, "barbeiro");
+  const useBarbeirosRef = query(
+    collection(database, "cliente"),
+    where("role", "==", "barbeiro")
+  );
   const useAgendamentosRef = collection(database, "agendamento");
   const [barbeiros, setBarbeiros] = useState([]);
 
@@ -57,16 +60,30 @@ export default function ManagerHome({ navigation }) {
 
   useEffect(() => {
     const getAgendamentos = async () => {
-      const q = query(useAgendamentosRef, where('barbeiro', '==', barbeiros[0].nome));
-      const agendamentosData = await getDocs(q);
-      const agendamentoList = agendamentosData.docs.map((doc) => ({
-        ...doc.data(),
-      }));
-      setAgendamentos(agendamentoList);
-      console.log(agendamentoList);
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        // Encontra o índice do barbeiro na lista de barbeiros
+        const barbeiroIndex = barbeiros.findIndex(barbeiro => barbeiro.email === currentUser.email);
+
+        // Verifica se o barbeiro foi encontrado
+        if (barbeiroIndex !== -1) {
+          const barbeiroNome = barbeiros[barbeiroIndex].nome; 
+
+          // Filtra os agendamentos pelo nome do barbeiro
+          const q = query(useAgendamentosRef, where('barbeiro', '==', barbeiroNome));
+          const agendamentosData = await getDocs(q);
+          const agendamentoList = agendamentosData.docs.map((doc) => ({
+            ...doc.data(),
+          }));
+          setAgendamentos(agendamentoList);
+          console.log(agendamentoList);
+        } else {
+          console.log('Barbeiro não encontrado na lista.');
+        }
+      }
     };
     getAgendamentos();
-  }, []);
+  }, [barbeiros]); // Adiciona barbeiros como dependência do useEffect
 
 
   if (isLoading) {

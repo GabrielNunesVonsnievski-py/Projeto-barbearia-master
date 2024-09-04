@@ -21,7 +21,7 @@ export default function Agendamento({ navigation }) {
   }, []);
 
   const onChange = (event, selectedDate) => {
-    const currentDate = selectedDate || date;
+    const currentDate = selectedDate || date; 
     if (showDate) {
       setDate(currentDate);
       setShowDate(Platform.OS === 'ios'); // Para iOS, mantém o picker aberto
