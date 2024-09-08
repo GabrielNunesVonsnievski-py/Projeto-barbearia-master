@@ -21,17 +21,16 @@ export default function Agendamento({ navigation }) {
   }, []);
 
   const onChange = (event, selectedDate) => {
-    const currentDate = selectedDate || date; 
+    const currentDate = selectedDate || date;
     if (showDate) {
       setDate(currentDate);
-      setShowDate(Platform.OS === 'ios'); // Para iOS, mantém o picker aberto
-      setData(dayjs(currentDate).format('YYYY-MM-DD')); // Armazenando a data formatada no estado
-
-      setTime(new Date(currentDate)); //Se n tiver isso, dps de voce escolher o dia n é mais possivel alterar a hora. Como? n sei
+      setShowDate(Platform.OS === 'ios');
+      setData(dayjs(currentDate).format('YYYY-MM-DD')); 
+      setTime(new Date(currentDate)); 
     } else if (showTime) {
       setTime(currentDate);
-      setShowTime(Platform.OS === 'ios'); // Para iOS, mantém o picker aberto
-      setHora(dayjs(currentDate).format('HH:mm')); // Armazenando a hora formatada no estado
+      setShowTime(Platform.OS === 'ios');
+      setHora(currentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })); 
     }
   };
   
@@ -121,8 +120,8 @@ export default function Agendamento({ navigation }) {
         barbeiro: barbeiroSelecionado ? barbeiroSelecionado.nome : '',
         servico: servicoSelecionado ? servicoSelecionado.tipo : '',
         local: local,
-        data: data,    
-        horario: hora,  
+        data: dayjs(date).format('YYYY-MM-DD'),
+        horario: dayjs(time).format('HH:mm:ss'),
         idUser: user.uid,
       })
 
