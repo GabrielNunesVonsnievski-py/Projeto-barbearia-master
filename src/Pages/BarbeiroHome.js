@@ -5,7 +5,7 @@ import { auth, database, firestore, getDocs} from '../Config/firebaseconfig';
 import Loading from './Loading';
 import {collection, query, where} from 'firebase/firestore';
 
-export default function ManagerHome({ navigation }) {
+export default function BarbeiroHome({ navigation }) {
 
   const [isLoading, setIsLoading] = useState(true);
   const [agendamentos, setAgendamentos] = useState([]);

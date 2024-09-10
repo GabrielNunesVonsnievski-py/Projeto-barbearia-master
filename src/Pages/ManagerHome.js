@@ -1,8 +1,76 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Image, TouchableOpacity, StyleSheet, Text, ScrollView } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
+import { Picker } from '@react-native-picker/picker';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { auth, database } from '../Config/firebaseconfig'; 
 
 export default function ManagerHome({ navigation }) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [agendamentos, setAgendamentos] = useState([]);
+  const [barbeiroLogado, setBarbeiroLogado] = useState(null);
+  const [barbeiros, setBarbeiros] = useState([]);
+  const [SelectedBarbeiro, setSelectedBarbeiro] = useState(null);
+
+  const useBarbeirosRef = query(
+    collection(database, "cliente"),
+    where("role", "==", "barbeiro")
+  );
+  const useAgendamentosRef = collection(database, "agendamento");
+
+  useEffect(() => {
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+  }, []);
+
+  useEffect(() => {
+    const fetchCurrentUser = () => {
+      try {
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          setBarbeiroLogado(currentUser.uid);
+        } else {
+          console.log('Nenhum usuário está logado');
+        }
+      } catch (error) {
+        console.error('Erro ao obter o usuário atual:', error);
+      }
+    };
+
+    fetchCurrentUser();
+    getBarbeiros();
+  }, []);
+
+  const getBarbeiros = async () => {
+    try {
+      const dataBarbeiros = await getDocs(useBarbeirosRef);
+      const Lbarbeiros = dataBarbeiros.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      }));
+      setBarbeiros(Lbarbeiros);
+      console.log(Lbarbeiros);
+    } catch (error) {
+      console.error("Erro ao buscar Rotas: ", error);
+    }
+  };
+
+  useEffect(() => {
+    const getAgendamentos = async () => {
+      if (!SelectedBarbeiro) return;
+      const q = query(useAgendamentosRef, where('barbeiro', '==', SelectedBarbeiro));
+      const agendamentosData = await getDocs(q);
+      const agendamentoList = agendamentosData.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id
+      }));
+      setAgendamentos(agendamentoList);
+      console.log(agendamentoList);
+    };
+
+    getAgendamentos();
+  }, [SelectedBarbeiro]);
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       {/* Banner */}
@@ -17,28 +85,36 @@ export default function ManagerHome({ navigation }) {
       {/* Conteúdo Principal */}
       <View style={styles.container}>
         <View style={styles.content}>
-          {/* Formulário */}
-          <View style={styles.formContainer}>
-            <Image
-              source={{ uri: 'https://lh3.googleusercontent.com/p/AF1QipPe9P-vkmj_zpBaanW6BuB6omZHkWTDTpnWqk95=s680-w680-h510' }}
-              style={styles.imagemesa}
-            />
-            <Text style={styles.addressText}>
-              <FontAwesome5 name="map-marker-alt" size={16} color="#b69045" /> R. Dr José de Patta, 471 - Centro, Criciúma - SC, 88802-240
-            </Text>
-            <Text style={styles.centeredText}>
-              MANAGER
-            </Text>
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Agendamento')}>
-              <Text style={styles.buttonText}>Agendar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Horario')}>
-              <Text style={styles.buttonText}>Ver agendamentos</Text>
-            </TouchableOpacity>
-          </View>
+        <Picker
+          selectedValue={SelectedBarbeiro}
+          style={styles.picker}
+          onValueChange={(itemValue) => {
+            console.log('Selecionado:', itemValue);
+            setSelectedBarbeiro(itemValue); // Defina o nome do barbeiro selecionado
+          }}
+        >
+          {barbeiros.map((barbeiro) => (
+            <Picker.Item key={barbeiro.nome} label={barbeiro.nome} value={barbeiro.nome} />
+          ))}
+        </Picker>
+
+
+          {/* Lista de Agendamentos */}
+          {agendamentos.length > 0 ? (
+            agendamentos.map((agendamento) => (
+              <View key={agendamento.id} style={styles.agendamentoContainer}>
+                <Text style={styles.agendamentoText}>Data: {agendamento.data}</Text>
+                <Text style={styles.agendamentoText}>Horário: {agendamento.horario}</Text>
+                <Text style={styles.agendamentoText}>Serviço: {agendamento.servico}</Text>
+                <Text style={styles.agendamentoText}></Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noAgendamentoText}>Nenhum agendamento encontrado</Text>
+          )}
         </View>
 
-        {/* Rodapé */}
+        {/* blg de baixo */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
             <FontAwesome5 name="phone" size={14} color="#b69045" /> (48) 99933-2071
@@ -151,5 +227,24 @@ const styles = StyleSheet.create({
     color: '#b69045',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  picker: {
+    width: '100%',
+    marginBottom: 20,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+  },
+  agendamentoContainer: {
+    marginBottom: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#b69045',
+    borderRadius: 10,
+    backgroundColor: '#fff',
+  },
+  agendamentoText: {
+    color: '#000',
   },
 });

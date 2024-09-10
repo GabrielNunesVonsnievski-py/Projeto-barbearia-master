@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { database, doc, updateDoc } from "../Config/firebaseconfig";
+import DateTimePicker from '@react-native-community/datetimepicker';
 import Loading from './Loading';
 
 export default function Details({ navigation, route }) {
 
     const [isLoading, setIsLoading] = useState(true);
-    const [horarioEdit, setHorarioEdit] = useState(route.params.hora);
-    const [dataEdit, setdataEdit] = useState(route.params.data);
+    const [horarioEdit, setHorarioEdit] = useState(new Date(route.params.hora)); // Define a data inicial
+    const [dataEdit, setDataEdit] = useState(new Date(route.params.data)); // Define a data inicial
+    const [showHorarioPicker, setShowHorarioPicker] = useState(false);
+    const [showDatePicker, setShowDatePicker] = useState(false);
     const idagendamento = route.params.id;
 
     useEffect(() => {
@@ -47,19 +50,36 @@ export default function Details({ navigation, route }) {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.txtdescription}> Description </Text>
-            <TextInput
-                style={styles.input}
-                placeholder="Ex: 1500 (15:00)"
-                onChangeText={setHorarioEdit}
-                value={horarioEdit}
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Ex: 1500 (15:00)"
-                onChangeText={setdataEdit}
-                value={dataEdit}
-            />
+            <Text style={styles.txtdescription}> Editar Horário </Text>
+
+            <TouchableOpacity style={styles.timeButton} onPress={() => setShowHorarioPicker(true)}>
+                <Text>Selecione o Horário</Text> 
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.timeButton} onPress={() => setShowDatePicker(true)}>
+                <Text>Selecione a Data</Text> 
+            </TouchableOpacity>
+
+            {showHorarioPicker && (
+                <DateTimePicker
+                    testID="dateTimePicker"
+                    value={horarioEdit}
+                    mode={'time'}
+                    is24Hour={true}
+                    onChange={editHorario()}
+                />
+            )}
+
+            {showDatePicker && (
+                <DateTimePicker
+                    testID="dateTimePicker"
+                    value={dataEdit}
+                    mode={'date'}
+                    is24Hour={true}
+                    onChange={editHorario()}
+                />
+            )}
+    
             <TouchableOpacity
                 style={styles.btnsave}
                 onPress={() => { editHorario(horarioEdit, idagendamento, dataEdit) }}>
@@ -106,5 +126,20 @@ const styles = StyleSheet.create({
         color: '#EFF1ED',
         fontSize: 25,
         fontWeight: 'bold',
-    }
+    },
+    DateTimePicker: {
+        height: 100,
+        width: 100,
+        borderRadius: 5,
+    },
+    timeButton: {
+        backgroundColor: '#b69045',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 20,
+        marginVertical: 10,
+        alignItems: 'center',
+        width: '100%', // Full width
+        maxWidth: 300, // Limit max width
+      }
 });
