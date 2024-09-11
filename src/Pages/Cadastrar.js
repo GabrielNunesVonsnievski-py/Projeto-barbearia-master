@@ -72,7 +72,7 @@ export default function Cadastrar() {
 
           {/* Formulário */}
           <View style={styles.formContainer}>
-            <Text style={styles.title}>Cadastrar</Text>
+            <Text style={styles.title}>Cadastro</Text>
             <TextInput
               style={styles.input}
               placeholder="Email"
@@ -112,7 +112,7 @@ export default function Cadastrar() {
               value={telefone}
             />
             <TouchableOpacity style={styles.signUpButton} onPress={NovoUsuario}>
-              <Text style={styles.buttonText}>Cadastrar</Text>
+              <Text style={styles.buttonText}>CADASTRAR</Text>
             </TouchableOpacity>
 
             <Text
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   formContainer: {
     width: '60%',
     alignSelf: 'center',
-    marginTop: 100,
+    marginTop: 50,
   },
   title: {
     fontSize: 24,
@@ -206,13 +206,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   footer: {
-    position: 'absolute',
-    bottom: 0,
+    position: 'flex',
     width: '100%',
     backgroundColor: 'black',
-    paddingVertical: 10,
+    paddingVertical: 20,
     paddingHorizontal: 20,
     alignItems: 'center',
+   
   },
   footerText: {
     color: '#b69045',

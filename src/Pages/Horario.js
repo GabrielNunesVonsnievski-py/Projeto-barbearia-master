@@ -1,22 +1,21 @@
-import React, {useState, useEffect} from "react";
-import {SafeAreaView, Text, View, TouchableOpacity,FlatList, StyleSheet} from 'react-native';
-import { collection, onSnapshot, query,where } from 'firebase/firestore';
+import React, { useState, useEffect } from "react";
+import { SafeAreaView, Text, View, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { signOut } from "firebase/auth";
-import { database, auth , doc , deleteDoc} from "../Config/firebaseconfig";
+import { database, auth, doc, deleteDoc } from "../Config/firebaseconfig";
 import Loading from './Loading';
 
-
-export default function Horario ({navigation}){
+export default function Horario({ navigation }) {
 
     const [isLoading, setIsLoading] = useState(true);
     const [horario, setHorario] = useState([])
-   
+
     useEffect(() => {
         setTimeout(() => {
-          setIsLoading(false);
-        }, 2000); // 2 segundos de delay que o marcos não gosta
-      }, []);
+            setIsLoading(false);
+        }, 2000);
+    }, []);
 
     useEffect(() => {
         const user = auth.currentUser;
@@ -38,17 +37,15 @@ export default function Horario ({navigation}){
         return () => unsubscribe();
     }, [])
 
-    function deleteHorario(id){
-        
-        //database.collection("Tasks").doc(id).deleteDoc()
+    function deleteHorario(id) {
         const HorarioDocRef = doc(database, "agendamento", id);
         deleteDoc(HorarioDocRef)
-        
     }
+
     const logout = async () => {
         try {
             await signOut(auth);
-            navigation.replace("Login"); // ureplace para que o usuário não possa voltar para a tela de tarefas com o botão de voltar
+            navigation.replace("Login");
         } catch (error) {
             console.error("Error logging out: ", error);
         }
@@ -57,114 +54,110 @@ export default function Horario ({navigation}){
     if (isLoading) {
         return <Loading />;
     }
-    
-    return(
-        <SafeAreaView style={styles.container}>
-          <FlatList
-          showsVerticalScrollIndicator={false}
-          data={horario}
-          renderItem={({item} )=>{
-            return(
-            <View style={styles.tasks}>
-                <TouchableOpacity
-                    style={styles.btnDeleteTask}
-                    onPress={()=>{
-                        deleteHorario(item.id)
-                    }}>
-                    <AntDesign name="delete" size={24} color="#b69045" />
-                </TouchableOpacity>
-                <Text
-                style={styles.txtdescription}
-                onPress={()=> {
-                    navigation.navigate("Details",{
-                        id:item.id,
-                        data:item.data,
-                        horario:item.horario
-                    })
-                }}>
-                    {item.data +'       ' + item.horario}
-                </Text>
-            </View>
-            )
-        }}
-        />
 
-          <TouchableOpacity style={styles.btnNewTask}>
-            <Text 
-            style={styles.iconBtn}
-            onPress={()=> navigation.navigate("Agendamento")}> + </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.btnLogout} onPress={logout}>
+    return (
+        <SafeAreaView style={styles.container}>
+            <FlatList
+                showsVerticalScrollIndicator={false}
+                data={horario}
+                renderItem={({ item }) => {
+                    return (
+                        <View style={styles.taskContainer}>
+                            <TouchableOpacity
+                                style={styles.btnDeleteTask}
+                                onPress={() => {
+                                    deleteHorario(item.id)
+                                }}>
+                                <AntDesign name="delete" size={24} color="#FF4C4C" />
+                            </TouchableOpacity>
+                            <Text
+                                style={styles.taskDescription}
+                                onPress={() => {
+                                    navigation.navigate("Details", {
+                                        id: item.id,
+                                        data: item.data,
+                                        horario: item.horario
+                                    })
+                                }}>
+                                {item.data + '       ' + item.horario}
+                            </Text>
+                        </View>
+                    )
+                }}
+            />
+            <TouchableOpacity style={styles.btnNewTask} onPress={() => navigation.navigate("Agendamento")}>
+                <Text style={styles.iconBtn}> + </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.btnLogout} onPress={logout}>
                 <Text style={styles.txtbtnLogout}>Logout</Text>
             </TouchableOpacity>
-
         </SafeAreaView>
     )
 }
 
 const styles = StyleSheet.create({
-    container:
-    {
+    container: {
         flex: 1,
-        backgroundColor: '#EFF1ED',
+        backgroundColor: '#e8e8e8',
         paddingTop: 20,
     },
-    btnNewTask:
-    {
+    taskContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginVertical: 8,
+        marginHorizontal: 16,
+        padding: 10,
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+    },
+    taskDescription: {
+        flex: 1,
+        color: '#000',
+        fontSize: 16,
+        marginRight: 10,
+        marginLeft: 45
+    },
+    btnDeleteTask: {
+        color: '#000',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 10,
+    },
+    btnNewTask: {
         backgroundColor: '#b69045',
         justifyContent: 'center',
         alignItems: 'center',
         position: 'absolute',
-        height: 60,
-        width: 60,
+        height: 50,
+        width: 50,
         bottom: 30,
         left: 20,
-        borderRadius: 20,
-        
+        borderRadius: 30,
     },
-    iconBtn:
-    {
-        color: '#EFF1ED',
+    iconBtn: {
+        color: '#FFF',
         fontSize: 25,
         fontWeight: 'bold',
     },
-    tasks: {
-        width: '100%',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 5,
-    },
-    btnDeleteTask: {
-        justifyContent: 'center',
-        paddingLeft: 15,
-
-    },
-    txtdescription:{
-        width: '80%',
-        alignContent: 'flex-start',
-        backgroundColor: '#bcbd8b',
-        padding: 12,
-        paddingHorizontal: 20,
-        marginBottom: 5,
-        marginRight: 15,
-        color: '#766153',
-    },
     btnLogout: {
-        backgroundColor: '#FF0000',
+        backgroundColor: '#b69045',
         justifyContent: 'center',
         alignItems: 'center',
         position: 'absolute',
         height: 50,
-        width: '60%',
+        width: '30%',
         bottom: 30,
         right: 20,
-        borderRadius: 20,
+        borderRadius: 25,
     },
     txtbtnLogout: {
-        color: '#EFF1ED',
+        color: '#FFF',
         fontSize: 18,
         fontWeight: 'bold',
     },
-        
-
-})
+});

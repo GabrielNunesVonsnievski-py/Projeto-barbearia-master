@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { database, doc, updateDoc } from "../Config/firebaseconfig";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Loading from './Loading';
@@ -50,87 +50,113 @@ export default function Details({ navigation, route }) {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.txtdescription}> Editar Horário </Text>
-
-            <TouchableOpacity style={styles.timeButton} onPress={() => setShowHorarioPicker(true)}>
-                <Text>Selecione o Horário</Text> 
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.timeButton} onPress={() => setShowDatePicker(true)}>
-                <Text>Selecione a Data</Text> 
-            </TouchableOpacity>
-
-            {showHorarioPicker && (
-                <DateTimePicker
-                    testID="dateTimePicker"
-                    value={horarioEdit}
-                    mode={'time'}
-                    is24Hour={true}
-                    onChange={editHorario()}
+            <View style={styles.banner}>
+                <Image
+                    source={{ uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQs7WRs_S875bpXggXPJ7A748m8J7XmKX08dQ&s' }}
+                    style={styles.image}
                 />
-            )}
+                <Text style={styles.bannerText}>MAJESTOSO</Text>
+            </View>
+            <View style={styles.contentWrapper}>
+                <View style={styles.content}>
+                    <Text style={styles.txtdescription}> Editar Horário </Text>
 
-            {showDatePicker && (
-                <DateTimePicker
-                    testID="dateTimePicker"
-                    value={dataEdit}
-                    mode={'date'}
-                    is24Hour={true}
-                    onChange={editHorario()}
-                />
-            )}
-    
-            <TouchableOpacity
-                style={styles.btnsave}
-                onPress={() => { editHorario(horarioEdit, idagendamento, dataEdit) }}>
-                <Text style={styles.txtbtnsave}> Save HORARIO </Text>
-            </TouchableOpacity>
+                    <TouchableOpacity style={styles.timeButton} onPress={() => setShowHorarioPicker(true)}>
+                        <Text style={styles.timeButtonText}>Selecione o Horário</Text> 
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.timeButton} onPress={() => setShowDatePicker(true)}>
+                        <Text style={styles.timeButtonText}>Selecione a Data</Text> 
+                    </TouchableOpacity>
+
+                    {showHorarioPicker && (
+                        <DateTimePicker
+                            testID="dateTimePicker"
+                            value={horarioEdit}
+                            mode={'time'}
+                            is24Hour={true}
+                            onChange={(event, selectedTime) => {
+                                setShowHorarioPicker(false);
+                                setHorarioEdit(selectedTime || horarioEdit);
+                            }}
+                        />
+                    )}
+
+                    {showDatePicker && (
+                        <DateTimePicker
+                            testID="dateTimePicker"
+                            value={dataEdit}
+                            mode={'date'}
+                            is24Hour={true}
+                            onChange={(event, selectedDate) => {
+                                setShowDatePicker(false);
+                                setDataEdit(selectedDate || dataEdit);
+                            }}
+                        />
+                    )}
+            
+                    <TouchableOpacity
+                        style={styles.btnsave}
+                        onPress={() => { editHorario(horarioEdit, idagendamento, dataEdit) }}>
+                        <Text style={styles.txtbtnsave}> Salvar horário </Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
         </View>
     )
 }
 
 const styles = StyleSheet.create({
-    container:
-    {
+    container: {
         flex: 1,
-        backgroundColor: '#EFF1ED',
+        backgroundColor: '#000', 
     },
-    txtdescription: {
-        width: '90%',
-        marginTop: 20,
-        marginLeft: 20,
-        fontSize: 16,
-        color: '#373D20'
+    banner: {
+        alignItems: 'center',
+        marginBottom: 20,
+        padding: 20,
+        backgroundColor: '#000', // Fundo preto
     },
-    input: {
-        width: '90%',
+    image: {
+        width: 150,
+        height: 150,
+        borderRadius: 75,
+    },
+    bannerText: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        color: '#b69045',
         marginTop: 10,
-        padding: 10,
-        height: 50,
-        borderBottomWidth: 1,
-        borderBottomColor: '#373D20',
-        margin: 'auto'
     },
-    btnsave: {
-        width: '60%',
-        backgroundColor: '#373D20',
+    contentWrapper: {
         justifyContent: 'center',
         alignItems: 'center',
-        position: 'absolute',
+    },
+    content: {
+        width: '90%',
+        backgroundColor: '#fff', // Fundo branco
+        padding: 30,
+        borderRadius: 20,
+    },
+    txtdescription: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#000',
+        marginBottom: 10,
+    },
+    btnsave: {
+        width: '100%',
+        backgroundColor: '#b69045',
+        justifyContent: 'center',
+        alignItems: 'center',
         height: 50,
-        bottom: '5%',
-        left: '20%',
+        marginTop: 20,
         borderRadius: 20,
     },
     txtbtnsave: {
-        color: '#EFF1ED',
+        color: '#FFF',
         fontSize: 25,
         fontWeight: 'bold',
-    },
-    DateTimePicker: {
-        height: 100,
-        width: 100,
-        borderRadius: 5,
     },
     timeButton: {
         backgroundColor: '#b69045',
@@ -141,5 +167,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         width: '100%', // Full width
         maxWidth: 300, // Limit max width
-      }
+    },
+    timeButtonText: {
+        color: '#fff', // Texto branco
+    }
 });

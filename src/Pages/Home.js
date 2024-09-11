@@ -1,5 +1,5 @@
-import React , {useState, useEffect } from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, Text, ScrollView} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Image, TouchableOpacity, StyleSheet, Text, ScrollView } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import Loading from './Loading';
 
@@ -38,17 +38,14 @@ export default function Home({ navigation }) {
           <Text style={styles.addressText}>
             <FontAwesome5 name="map-marker-alt" size={16} color="#b69045" /> R. Dr José de Patta, 471 - Centro, Criciúma - SC, 88802-240
           </Text>
-          <Text style={styles.centeredText}>
-            Refine sua aparência com estilo e precisão
-          </Text>
           <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Agendamento')}>
             <Text style={styles.buttonText}>Agendar</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Horario')}>
             <Text style={styles.buttonText}>Ver agendamentos</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('WhatsApp')}>
-            <Text style={styles.button}>Abrir WhatsApp</Text>
+          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('WhatsApp')}>
+            <Text style={styles.buttonText}>Abrir WhatsApp</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -69,79 +66,64 @@ export default function Home({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#000', // Cor de fundo semelhante à da página de Agendamento
   },
   scrollViewContent: {
     flexGrow: 1,
     paddingBottom: 80, // Espaço para o footer
     alignItems: 'center',
-    backgroundColor: '#f4f4f4',
   },
   banner: {
-    width: '100%',
-    backgroundColor: '#000000',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 20,
     marginBottom: 20,
   },
   image: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    resizeMode: 'cover',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
   },
   bannerText: {
-    color: '#b69045',
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
-    marginTop: 15,
+    color: '#b69045',
+    marginTop: 10,
   },
   formContainer: {
     width: '90%',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#b69045',
-    borderRadius: 10,
-    padding: 25,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    borderRadius: 15,
+    padding: 20,
+    backgroundColor: '#FFF', // Cor de fundo semelhante à da página de Agendamento
     shadowOpacity: 0.2,
     shadowRadius: 3,
     elevation: 5,
     marginBottom: 20,
   },
   imagemesa: {
-    width: 220,
-    height: 140,
+    width: '100%',
+    height: 200,
     borderRadius: 10,
     resizeMode: 'cover',
+    marginBottom: 15,
   },
   addressText: {
     textAlign: 'center',
-    marginTop: 15,
+    marginTop: 10,
     fontSize: 14,
     color: '#b69045',
-  },
-  centeredText: {
-    textAlign: 'center',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 25,
-    color: '#b69045',
+    marginBottom: 20,
   },
   button: {
-    marginTop: 20,
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: '#b69045',
-    paddingVertical: 12,
+    backgroundColor: '#b69045',
+    borderRadius: 20,
+    paddingVertical: 15,
     paddingHorizontal: 30,
-    borderRadius: 25,
+    alignItems: 'center',
+    marginBottom: 15,
+    width: '100%',
   },
   buttonText: {
-    color: '#b69045',
+    color: '#FFF',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -149,10 +131,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    backgroundColor: '#000000',
-    paddingVertical: 10,
+    backgroundColor: '#000',
+    paddingVertical: 20,
+    paddingHorizontal: 20,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   footerText: {
     color: '#b69045',

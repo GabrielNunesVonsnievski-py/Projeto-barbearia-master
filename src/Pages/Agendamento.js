@@ -211,7 +211,7 @@ export default function Agendamento({ navigation }) {
             <Text style={styles.selectedDate}>Data selecionada: {dayjs(date).format('DD/MM/YYYY')}</Text>
 
             {showDate && (
-              <DateTimePicker
+              <DateTimePicker style={styles.DateTimePickerData}
                 testID="dateTimePicker"
                 value={date}
                 mode={'date'}
@@ -227,7 +227,7 @@ export default function Agendamento({ navigation }) {
             <Text style={styles.selectedTime}>Hora selecionada: {dayjs(time).format('HH:mm')}</Text>
 
             {showTime && (
-              <DateTimePicker
+              <DateTimePicker style={styles.DateTimePickerHora}
                 testID="dateTimePicker"
                 value={time}
                 mode={'time'}
@@ -253,122 +253,111 @@ export default function Agendamento({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  DateTimePickerHora:{
+    alignItems: 'center',
+    padding: 20,
+    marginBottom: 30,
+    marginRight: 120,
+    color: '#b69045',
+  },
+  DateTimePickerData:{
+    alignItems: 'center',
+    padding: 20,
+    marginBottom: 30,
+    marginRight: 100
+  },
   scrollViewContent: {
     flexGrow: 1,
+    backgroundColor: '#000',
   },
   container: {
     flex: 1,
-    backgroundColor: 'white',
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: 20,
   },
   banner: {
-    width: '100%',
-    backgroundColor: '#000000',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
     marginBottom: 20,
   },
   logo: {
-    width: 100,
-    height: 100,
-    resizeMode: 'cover',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
   },
   bannerText: {
-    color: '#b69045',
-    fontSize: 20,
+    fontSize: 32,
     fontWeight: 'bold',
+    color: '#b69045',
+    marginTop: 10,
   },
   contentContainer: {
     flex: 1,
-    width: '90%',
     justifyContent: 'center',
-    alignItems: 'center',
   },
   formContainer: {
-    width: '100%',
+    backgroundColor: '#FFFF',
+    padding: 20,
+    borderRadius: 15,
     marginBottom: 20,
   },
   label: {
     fontSize: 18,
-    marginBottom: 10,
-    color: '#b69045',
     fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 10,
   },
   picker: {
-    width: '100%',
+    backgroundColor: '#FFFF',
+    color: '#FFF',
     marginBottom: 20,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
   },
   dateButton: {
     backgroundColor: '#b69045',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    marginVertical: 10,
-    alignItems: 'center',
-    width: '100%', // Full width
-    maxWidth: 300, // Limit max width
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  dateButtonText: {
+    color: '#FFFF',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  selectedDate: {
+    color: '#b69045',
+    fontWeight: 'bold',
+    marginBottom: 20,
+   marginLeft: 60
   },
   timeButton: {
     backgroundColor: '#b69045',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    marginVertical: 10,
-    alignItems: 'center',
-    width: '100%', // Full width
-    maxWidth: 300, // Limit max width
-  },
-  dateButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 10,
   },
   timeButtonText: {
-    color: 'white',
-    fontSize: 16,
+    color: '#FFFF',
     fontWeight: 'bold',
-  },
-  selectedDate: {
-    fontSize: 16,
-    marginVertical: 10,
-    color: '#333',
+    textAlign: 'center',
   },
   selectedTime: {
-    fontSize: 16,
-    marginVertical: 10,
-    color: '#333',
+    color: '#b69045',
+    fontWeight: 'bold',
+    marginBottom: 20,
+    marginLeft: 80
   },
   buttonsContainer: {
-    width: '100%',
-    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   button: {
-    marginTop: 10,
     backgroundColor: '#b69045',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    width: '100%', // Full width
-    maxWidth: 300, // Limit max width
+    padding: 15,
+    borderRadius: 10,
+    flex: 1,
+    marginHorizontal: 5,
+    alignItems: 'center',
   },
   buttonText: {
-    color: 'white',
-    fontSize: 16,
+    color: '#FFFF',
     fontWeight: 'bold',
-    textAlign: 'center', // Center text within buttons
   },
-  input: {
-    width: '90%',
-    marginTop: 10,
-    padding: 10,
-    height: 50,
-    borderBottomWidth: 1,
-    borderBottomColor: '#b69045',
-  }
 });

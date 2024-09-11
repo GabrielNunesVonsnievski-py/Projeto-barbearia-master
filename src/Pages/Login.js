@@ -85,7 +85,7 @@ export default function Login({ navigation }) {
               secureTextEntry
             />
             <TouchableOpacity style={styles.btnLogin} onPress={LoginUser}>
-              <Text style={styles.txtbtnLogin}>Login</Text>
+              <Text style={styles.txtbtnLogin}>LOGIN</Text>
             </TouchableOpacity>
             <Text
               style={styles.txtNewuser}
@@ -137,9 +137,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   formContainer: {
-    width: '90%',
+    width: '80%',
     alignSelf: 'center',
-    marginTop: 20,
+    marginTop: 90
   },
   title: {
     fontSize: 24,
@@ -177,13 +177,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   footer: {
-    position: 'absolute',
-    bottom: 0,
+    position: 'flex',
+    bottom: -3,
     width: '100%',
     backgroundColor: 'black',
-    paddingVertical: 10,
+    paddingVertical: 20,
     paddingHorizontal: 20,
     alignItems: 'center',
+    marginTop: 50
   },
   footerText: {
     color: '#b69045',
