@@ -15,7 +15,7 @@ export default function Details({ navigation, route }) {
 
     useEffect(() => {
         setTimeout(() => {
-          setIsLoading(false);
+            setIsLoading(false);
         }, 2000); // 2 segundos de delay
     }, []);
 
@@ -61,30 +61,10 @@ export default function Details({ navigation, route }) {
 
     return (
         <View style={styles.container}>
-<<<<<<< HEAD
             <View style={styles.banner}>
                 <Image
                     source={{ uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQs7WRs_S875bpXggXPJ7A748m8J7XmKX08dQ&s' }}
                     style={styles.image}
-=======
-            <Text style={styles.txtdescription}> Editar Horário </Text>
-
-            <TouchableOpacity style={styles.timeButton} onPress={() => setShowHorarioPicker(true)}>
-                <Text>Selecione o Horário</Text> 
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.timeButton} onPress={() => setShowDatePicker(true)}>
-                <Text>Selecione a Data</Text> 
-            </TouchableOpacity>
-
-            {showHorarioPicker && (
-                <DateTimePicker
-                    testID="dateTimePicker"
-                    value={horarioEdit || new Date()}
-                    mode={'time'}
-                    is24Hour={true}
-                    onChange={(event, selectedTime) => handleHorarioChange(event, selectedTime)}
->>>>>>> 589ad24 (correcao-agendamento(verificaoHoraIgual,IntervaloHorario),Barbeiro-home(mostraNomedoCliente))
                 />
                 <Text style={styles.bannerText}>MAJESTOSO</Text>
             </View>
@@ -92,13 +72,12 @@ export default function Details({ navigation, route }) {
                 <View style={styles.content}>
                     <Text style={styles.txtdescription}> Editar Horário </Text>
 
-<<<<<<< HEAD
                     <TouchableOpacity style={styles.timeButton} onPress={() => setShowHorarioPicker(true)}>
-                        <Text style={styles.timeButtonText}>Selecione o Horário</Text> 
+                        <Text style={styles.timeButtonText}>Selecione o Horário</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.timeButton} onPress={() => setShowDatePicker(true)}>
-                        <Text style={styles.timeButtonText}>Selecione a Data</Text> 
+                        <Text style={styles.timeButtonText}>Selecione a Data</Text>
                     </TouchableOpacity>
 
                     {showHorarioPicker && (
@@ -107,10 +86,7 @@ export default function Details({ navigation, route }) {
                             value={horarioEdit}
                             mode={'time'}
                             is24Hour={true}
-                            onChange={(event, selectedTime) => {
-                                setShowHorarioPicker(false);
-                                setHorarioEdit(selectedTime || horarioEdit);
-                            }}
+                            onChange={handleHorarioChange}
                         />
                     )}
 
@@ -120,13 +96,10 @@ export default function Details({ navigation, route }) {
                             value={dataEdit}
                             mode={'date'}
                             is24Hour={true}
-                            onChange={(event, selectedDate) => {
-                                setShowDatePicker(false);
-                                setDataEdit(selectedDate || dataEdit);
-                            }}
+                            onChange={handleDateChange}
                         />
                     )}
-            
+
                     <TouchableOpacity
                         style={styles.btnsave}
                         onPress={() => { editHorario(horarioEdit, idagendamento, dataEdit) }}>
@@ -134,24 +107,6 @@ export default function Details({ navigation, route }) {
                     </TouchableOpacity>
                 </View>
             </View>
-=======
-            {showDatePicker && (
-                <DateTimePicker
-                    testID="dateTimePicker"
-                    value={dataEdit || new Date()}
-                    mode={'date'}
-                    is24Hour={true}
-                    onChange={(event, selectedDate) =>handleDateChange(event, selectedDate)}
-                />
-            )}
-            <Text style={styles.selectedDate}>Data selecionada: {(date).format('DD/MM/YYYY')}</Text>
-
-            <TouchableOpacity
-                style={styles.btnsave}
-                onPress={() => { editHorario(horarioEdit, idagendamento, dataEdit) }}>
-                <Text style={styles.txtbtnsave}> Save HORARIO </Text>
-            </TouchableOpacity>
->>>>>>> 589ad24 (correcao-agendamento(verificaoHoraIgual,IntervaloHorario),Barbeiro-home(mostraNomedoCliente))
         </View>
     )
 }
@@ -159,13 +114,13 @@ export default function Details({ navigation, route }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#000', 
+        backgroundColor: '#000',
     },
     banner: {
         alignItems: 'center',
         marginBottom: 20,
         padding: 20,
-        backgroundColor: '#000', // Fundo preto
+        backgroundColor: '#000',
     },
     image: {
         width: 150,
@@ -184,7 +139,7 @@ const styles = StyleSheet.create({
     },
     content: {
         width: '90%',
-        backgroundColor: '#fff', // Fundo branco
+        backgroundColor: '#fff',
         padding: 30,
         borderRadius: 20,
     },
@@ -215,15 +170,12 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         marginVertical: 10,
         alignItems: 'center',
-<<<<<<< HEAD
-        width: '100%', // Full width
-        maxWidth: 300, // Limit max width
+        width: '100%',
+        maxWidth: 300,
     },
     timeButtonText: {
-        color: '#fff', // Texto branco
-=======
-        width: '100%', 
+        color: '#fff',
+        width: '100%',
         maxWidth: 300,
->>>>>>> 589ad24 (correcao-agendamento(verificaoHoraIgual,IntervaloHorario),Barbeiro-home(mostraNomedoCliente))
     }
 });

@@ -269,30 +269,19 @@ export default function Agendamento({ navigation }) {
             {/*<Text style={styles.selectedTime}>Hora selecionada: {dayjs(time).format('HH:mm')}</Text>*/}
 
             {showTime && (
-<<<<<<< HEAD
-              <DateTimePicker style={styles.DateTimePickerHora}
-                testID="dateTimePicker"
-                value={time}
-                mode={'time'}
-                is24Hour={true}
-                onChange={onChange}
-              />
-=======
               <View>
                 <Text style={styles.label}>Escolha o horário:</Text>
                 <Picker
                    selectedValue={hora}
                    onValueChange={(itemValue) => setHora(itemValue)} 
-                   style={{ height: 50, width: 150, marginEnd: 50, flex: 1, textAlign: 'center' }}
+                   style={{ height: 100, width: 200, margin:70, textAlign: 'center', alignContent:'center' }}
                  >
                    {intervaloTempo.map((intervalo, index) => (
                      <Picker.Item key={index} label={intervalo} value={intervalo} />
                    ))}
                 </Picker>
               </View>
->>>>>>> 589ad24 (correcao-agendamento(verificaoHoraIgual,IntervaloHorario),Barbeiro-home(mostraNomedoCliente))
-            )}
-
+              )}
           </View>
 
           <View style={styles.buttonsContainer}>
@@ -326,6 +315,7 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     flexGrow: 1,
     backgroundColor: '#000',
+    displayFlex:1,
   },
   container: {
     flex: 1,
@@ -402,14 +392,11 @@ const styles = StyleSheet.create({
     marginLeft: 80
   },
   buttonsContainer: {
-<<<<<<< HEAD
     flexDirection: 'row',
     justifyContent: 'space-between',
-=======
     marginTop: 100,
     width: '100%',
     alignItems: 'center',
->>>>>>> 589ad24 (correcao-agendamento(verificaoHoraIgual,IntervaloHorario),Barbeiro-home(mostraNomedoCliente))
   },
   button: {
     backgroundColor: '#b69045',
