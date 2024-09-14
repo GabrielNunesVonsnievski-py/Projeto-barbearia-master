@@ -111,6 +111,7 @@ export default function BarbeiroHome({ navigation }) {
                 <Text style={styles.agendamentoText}>Data: {agendamento.data}</Text>
                 <Text style={styles.agendamentoText}>Horário: {agendamento.horario}</Text>
                 <Text style={styles.agendamentoText}>Serviço: {agendamento.servico}</Text>
+                <Text style={styles.agendamentoText}>Cliente: {agendamento.nomeCliente}</Text>
                 <Text style={styles.agendamentoText}></Text>
               </View>
             ))

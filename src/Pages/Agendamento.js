@@ -7,55 +7,29 @@ import { database, auth, collection, addDoc, query, where, getDocs, updateDoc } 
 import Loading from './Loading';
 
 export default function Agendamento({ navigation }) {
-
   const [isLoading, setIsLoading] = useState(true);
   const [date, setDate] = useState(new Date());
-  const [time, setTime] = useState(new Date()); // Novo estado para a hora
+  const [time, setTime] = useState(new Date());
   const [showDate, setShowDate] = useState(false);
-  const [showTime, setShowTime] = useState(false); // Novo estado para mostrar o picker de hora
-
-  useEffect(() => {
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 2000); // 2 segundos de delay que o marcos não gosta
-  }, []);
-
-  const onChange = (event, selectedDate) => {
-    const currentDate = selectedDate || date;
-    if (showDate) {
-      setDate(currentDate);
-      setShowDate(Platform.OS === 'ios');
-      setData(dayjs(currentDate).format('YYYY-MM-DD')); 
-      setTime(new Date(currentDate)); 
-    } else if (showTime) {
-      setTime(currentDate);
-      setShowTime(Platform.OS === 'ios');
-      setHora(currentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })); 
-    }
-  };
-  
-
-  const showDatepicker = () => {
-    setShowDate(true);
-  };
-
-  const showTimepicker = () => {
-    setShowTime(true);
-  };
+  const [showTime, setShowTime] = useState(false);
 
   const [barbeiro, setBarbeiro] = useState('');
-  const [barbeiros, setBarbeiros] = useState([]);
+  const [barbeiros, setBarbeiros] = useState([]); 
   const [servico, setServico] = useState('');
   const [servicos, setServicos] = useState([]);
   const [local, setLocal] = useState('local1');
   const [data, setData] = useState(dayjs());
-  const [hora, setHora] = useState('');
-  
+  const [clienteNome, setClienteNome] = useState('');
+
+  useEffect(() => {
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+  }, []);
 
   useEffect(() => {
     const fetchBarbeiros = async () => {
       try {
-        // Consulta na coleção 'cliente' para pegar apenas os que têm 'role' igual a 'barbeiro'
         const clienteCollection = collection(database, "cliente");
         const barbeiroQuery = query(clienteCollection, where("role", "==", "barbeiro"));
         const querySnapshot = await getDocs(barbeiroQuery);
@@ -65,7 +39,7 @@ export default function Agendamento({ navigation }) {
         }));
         setBarbeiros(barbeirosList);
         if (barbeirosList.length > 0) {
-          setBarbeiro(barbeirosList[0].id); // Definindo o barbeiro padrão
+          setBarbeiro(barbeirosList[0].id);
         }
       } catch (error) {
         console.error("Error fetching barbeiros: ", error);
@@ -76,82 +50,150 @@ export default function Agendamento({ navigation }) {
   }, []);
 
   useEffect(() => {
-  const fetchServicos = async () => {
-    try {
-      const servicoCollection = collection(database, "servico");
-      const querySnapshot = await getDocs(servicoCollection);
-      const servicosList = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setServicos(servicosList);
-      console.log(servicosList)
+    const fetchServicos = async () => {
+      try {
+        const servicoCollection = collection(database, "servico");
+        const querySnapshot = await getDocs(servicoCollection);
+        const servicosList = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setServicos(servicosList);
+        console.log(servicosList);
 
-      if (servicosList.length > 0) {
-        setServico(servicosList[0].id); // Definindo o servico padrão
+        if (servicosList.length > 0) {
+          setServico(servicosList[0].id);
+        }
+      } catch (error) {
+        console.error("Error fetching servicos: ", error);
+      }
+    };
+
+    fetchServicos();
+  }, []);
+
+  const fetchUserName = async (userEmail) => {
+    try {
+      const clienteCollection = collection(database, "cliente");
+      const q = query(clienteCollection, where("email", "==", userEmail));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const cliente = querySnapshot.docs[0].data();
+        return cliente.nome;
+      } else {
+        console.error("No such user document!");
+        return null;
       }
     } catch (error) {
-      console.error("Error fetching servicos: ", error);
+      console.error("Error fetching user name: ", error);
     }
   };
 
-  fetchServicos();
-  }, []);
-
   const addAgendamento = async () => {
     try {
-      const disponivel = await checkDisponibilidade(data, hora);
-
+      const barbeiroSelecionado = barbeiros.find(b => b.id === barbeiro);
+      const servicoSelecionado = servicos.find(s => s.id === servico);
+      
+      const disponivel = await checkDisponibilidade(data, hora, barbeiroSelecionado.nome);
+  
       if (!disponivel) {
         Alert.alert('Horário Indisponível', 'Este horário já está agendado. Por favor, escolha outro horário.');
         return;
       }
-
+  
       const user = auth.currentUser;
       if (!user) {
         throw new Error('No user is authenticated');
       }
-
-      const barbeiroSelecionado = barbeiros.find(b => b.id === barbeiro);
-      const servicoSelecionado = servicos.find(s => s.id === servico);
-
+  
+      const nomeCliente = await fetchUserName(user.email);
+  
       const agendamentoCollection = collection(database, "agendamento");
       await addDoc(agendamentoCollection, {
         barbeiro: barbeiroSelecionado ? barbeiroSelecionado.nome : '',
         servico: servicoSelecionado ? servicoSelecionado.tipo : '',
         local: local,
         data: dayjs(date).format('YYYY-MM-DD'),
-        horario: dayjs(time).format('HH:mm:ss'),
+        horario: hora,  
+        nomeCliente: nomeCliente,
         idUser: user.uid,
-      })
-
+      });
+  
       Alert.alert(
         'Agendamento Confirmado!',
         `Barbeiro: ${barbeiroSelecionado.nome}\nServiço: ${servicoSelecionado.tipo}\nLocal: ${local}`,
         [{ text: 'OK', onPress: () => console.log('OK Pressed') }]
       );
-
+  
       navigation.navigate('Horario');
     } catch (error) {
       console.error("Error adding agendamento: ", error);
     }
   };
+  
 
-  const checkDisponibilidade = async (data, hora) => {
+  const checkDisponibilidade = async (data, hora, barbeiroSelecionado) => {
     try {
       const agendamentoCollection = collection(database, "agendamento");
       const q = query(agendamentoCollection, 
-        where("data", "==", data),
-        where("horario", "==", hora),
-        where("barbeiro", "==", barbeiro)
+        where("data", "==", data), 
+        where("horario", "==", hora), 
+        where("barbeiro", "==", barbeiroSelecionado)
       );
-
+  
       const querySnapshot = await getDocs(q);
       return querySnapshot.empty;
     } catch (error) {
       console.error("Error checking availability: ", error);
       return false;
     }
+  };
+  
+  const onChange = (event, selectedDate) => {
+    const currentDate = selectedDate || date;
+    const diaNaoUtil = dayjs(currentDate).day(); //0 = domingo, 6 = sabado
+
+    if (diaNaoUtil === 0) {
+      Alert.alert('Dia inválido', 'Selecione um dia de segunda a sábado.');
+      return;
+    }
+
+    if (showDate) {
+      setDate(currentDate);
+      setShowDate(Platform.OS === 'ios');
+      setData(dayjs(currentDate).format('YYYY-MM-DD')); 
+      setTime(new Date(currentDate));
+    } else if (showTime) {
+      setTime(currentDate);
+      setShowTime(Platform.OS === 'ios');
+      setHora(currentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })); 
+    }
+  };
+
+  const IntervalodeTempo = () => {
+    const intervaloTempo = [];
+    const horarioInicio = dayjs().hour(8).minute(0); //horario de início: 8:00
+    const horarioFinal = dayjs().hour(18).minute(0);  //horario q termina: 18:00
+  
+    let currentTime = horarioInicio;
+  
+    while (currentTime.isBefore(horarioFinal)) {
+      intervaloTempo.push(currentTime.format('HH:mm')); // Formata o horário como HH:mm
+      currentTime = currentTime.add(30, 'minute'); // Adiciona 30 minutos
+    }
+  
+    return intervaloTempo;
+  };
+
+  const [intervaloTempo, setIntervaloTempo] = useState(IntervalodeTempo());
+  const [hora, setHora] = useState(intervaloTempo[0]);
+
+  const showDatepicker = () => {
+    setShowDate(true);
+  };
+
+  const showTimepicker = () => {
+    setShowTime(true);
   };
 
   if (isLoading) {
@@ -224,9 +266,10 @@ export default function Agendamento({ navigation }) {
               <Text style={styles.timeButtonText}>Selecionar Hora</Text>
             </TouchableOpacity>
 
-            <Text style={styles.selectedTime}>Hora selecionada: {dayjs(time).format('HH:mm')}</Text>
+            {/*<Text style={styles.selectedTime}>Hora selecionada: {dayjs(time).format('HH:mm')}</Text>*/}
 
             {showTime && (
+<<<<<<< HEAD
               <DateTimePicker style={styles.DateTimePickerHora}
                 testID="dateTimePicker"
                 value={time}
@@ -234,6 +277,20 @@ export default function Agendamento({ navigation }) {
                 is24Hour={true}
                 onChange={onChange}
               />
+=======
+              <View>
+                <Text style={styles.label}>Escolha o horário:</Text>
+                <Picker
+                   selectedValue={hora}
+                   onValueChange={(itemValue) => setHora(itemValue)} 
+                   style={{ height: 50, width: 150, marginEnd: 50, flex: 1, textAlign: 'center' }}
+                 >
+                   {intervaloTempo.map((intervalo, index) => (
+                     <Picker.Item key={index} label={intervalo} value={intervalo} />
+                   ))}
+                </Picker>
+              </View>
+>>>>>>> 589ad24 (correcao-agendamento(verificaoHoraIgual,IntervaloHorario),Barbeiro-home(mostraNomedoCliente))
             )}
 
           </View>
@@ -345,8 +402,14 @@ const styles = StyleSheet.create({
     marginLeft: 80
   },
   buttonsContainer: {
+<<<<<<< HEAD
     flexDirection: 'row',
     justifyContent: 'space-between',
+=======
+    marginTop: 100,
+    width: '100%',
+    alignItems: 'center',
+>>>>>>> 589ad24 (correcao-agendamento(verificaoHoraIgual,IntervaloHorario),Barbeiro-home(mostraNomedoCliente))
   },
   button: {
     backgroundColor: '#b69045',

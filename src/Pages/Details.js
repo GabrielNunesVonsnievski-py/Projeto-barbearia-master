@@ -7,8 +7,8 @@ import Loading from './Loading';
 export default function Details({ navigation, route }) {
 
     const [isLoading, setIsLoading] = useState(true);
-    const [horarioEdit, setHorarioEdit] = useState(new Date(route.params.hora)); // Define a data inicial
-    const [dataEdit, setDataEdit] = useState(new Date(route.params.data)); // Define a data inicial
+    const [horarioEdit, setHorarioEdit] = useState(new Date(route.params.hora)); // hora inicial
+    const [dataEdit, setDataEdit] = useState(new Date(route.params.data)); // data inicial
     const [showHorarioPicker, setShowHorarioPicker] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
     const idagendamento = route.params.id;
@@ -16,9 +16,22 @@ export default function Details({ navigation, route }) {
     useEffect(() => {
         setTimeout(() => {
           setIsLoading(false);
-        }, 2000); // 2 segundos de delay que o marcos não gosta
-      }, []);
-    
+        }, 2000); // 2 segundos de delay
+    }, []);
+
+    function handleHorarioChange(event, selectedTime) {
+        setShowHorarioPicker(false);
+        if (selectedTime) {
+            setHorarioEdit(selectedTime);
+        }
+    }
+
+    function handleDateChange(event, selectedDate) {
+        setShowDatePicker(false);
+        if (selectedDate) {
+            setDataEdit(selectedDate);
+        }
+    }
 
     function editHorario(hora, id, data) {
         const HorarioDocRef = doc(database, "agendamento", id);
@@ -42,18 +55,36 @@ export default function Details({ navigation, route }) {
             });
     }
 
-
     if (isLoading) {
         return <Loading />;
     }
-    
 
     return (
         <View style={styles.container}>
+<<<<<<< HEAD
             <View style={styles.banner}>
                 <Image
                     source={{ uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQs7WRs_S875bpXggXPJ7A748m8J7XmKX08dQ&s' }}
                     style={styles.image}
+=======
+            <Text style={styles.txtdescription}> Editar Horário </Text>
+
+            <TouchableOpacity style={styles.timeButton} onPress={() => setShowHorarioPicker(true)}>
+                <Text>Selecione o Horário</Text> 
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.timeButton} onPress={() => setShowDatePicker(true)}>
+                <Text>Selecione a Data</Text> 
+            </TouchableOpacity>
+
+            {showHorarioPicker && (
+                <DateTimePicker
+                    testID="dateTimePicker"
+                    value={horarioEdit || new Date()}
+                    mode={'time'}
+                    is24Hour={true}
+                    onChange={(event, selectedTime) => handleHorarioChange(event, selectedTime)}
+>>>>>>> 589ad24 (correcao-agendamento(verificaoHoraIgual,IntervaloHorario),Barbeiro-home(mostraNomedoCliente))
                 />
                 <Text style={styles.bannerText}>MAJESTOSO</Text>
             </View>
@@ -61,6 +92,7 @@ export default function Details({ navigation, route }) {
                 <View style={styles.content}>
                     <Text style={styles.txtdescription}> Editar Horário </Text>
 
+<<<<<<< HEAD
                     <TouchableOpacity style={styles.timeButton} onPress={() => setShowHorarioPicker(true)}>
                         <Text style={styles.timeButtonText}>Selecione o Horário</Text> 
                     </TouchableOpacity>
@@ -102,6 +134,24 @@ export default function Details({ navigation, route }) {
                     </TouchableOpacity>
                 </View>
             </View>
+=======
+            {showDatePicker && (
+                <DateTimePicker
+                    testID="dateTimePicker"
+                    value={dataEdit || new Date()}
+                    mode={'date'}
+                    is24Hour={true}
+                    onChange={(event, selectedDate) =>handleDateChange(event, selectedDate)}
+                />
+            )}
+            <Text style={styles.selectedDate}>Data selecionada: {(date).format('DD/MM/YYYY')}</Text>
+
+            <TouchableOpacity
+                style={styles.btnsave}
+                onPress={() => { editHorario(horarioEdit, idagendamento, dataEdit) }}>
+                <Text style={styles.txtbtnsave}> Save HORARIO </Text>
+            </TouchableOpacity>
+>>>>>>> 589ad24 (correcao-agendamento(verificaoHoraIgual,IntervaloHorario),Barbeiro-home(mostraNomedoCliente))
         </View>
     )
 }
@@ -165,10 +215,15 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         marginVertical: 10,
         alignItems: 'center',
+<<<<<<< HEAD
         width: '100%', // Full width
         maxWidth: 300, // Limit max width
     },
     timeButtonText: {
         color: '#fff', // Texto branco
+=======
+        width: '100%', 
+        maxWidth: 300,
+>>>>>>> 589ad24 (correcao-agendamento(verificaoHoraIgual,IntervaloHorario),Barbeiro-home(mostraNomedoCliente))
     }
 });
