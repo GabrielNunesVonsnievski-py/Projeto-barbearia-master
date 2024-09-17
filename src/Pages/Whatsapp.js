@@ -33,16 +33,16 @@ const WhatsApp = () => {
 
   return (
     <View style={styles.container}>
-      <TextInput
+      {/*<TextInput
         style={styles.input}
         placeholder="Digite o número de telefone ex: +5548999999999"
         value={phoneNumber}
         onChangeText={setPhoneNumber}
         keyboardType="phone-pad"
-      />
+      />*/}
       <Button
         title="Abrir WhatsApp"
-        onPress={() => openWhatsApp(phoneNumber, 'Olá, como posso ajudar?')}
+        onPress={() => openWhatsApp('5548999332071', 'Olá!')}
       />
     </View>
   );

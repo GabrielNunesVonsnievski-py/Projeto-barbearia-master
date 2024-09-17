@@ -40,7 +40,7 @@ export default function ManagerHome({ navigation }) {
 
     fetchCurrentUser();
     getBarbeiros();
-  }, [currentUser]);
+  }, []);
 
   const getBarbeiros = async () => {
     try {
