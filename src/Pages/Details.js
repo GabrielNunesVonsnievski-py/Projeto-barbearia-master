@@ -7,8 +7,8 @@ import Loading from './Loading';
 export default function Details({ navigation, route }) {
 
     const [isLoading, setIsLoading] = useState(true);
-    const [horarioEdit, setHorarioEdit] = useState(new Date(route.params.hora)); // hora inicial
-    const [dataEdit, setDataEdit] = useState(new Date(route.params.data)); // data inicial
+    const [horarioEdit, setHorarioEdit] = useState(route.params.hora ? new Date(route.params.hora) : new Date());
+    const [dataEdit, setDataEdit] = useState(route.params.data ? new Date(route.params.data) : new Date());
     const [showHorarioPicker, setShowHorarioPicker] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
     const idagendamento = route.params.id;
@@ -18,6 +18,15 @@ export default function Details({ navigation, route }) {
             setIsLoading(false);
         }, 2000); // 2 segundos de delay
     }, []);
+
+    useEffect(() => {
+        if (!route.params.hora || isNaN(new Date(route.params.hora))) {
+            console.warn('Horário inválido:', route.params.hora);
+        }
+        if (!route.params.data || isNaN(new Date(route.params.data))) {
+            console.warn('Data inválida:', route.params.data);
+        }
+    }, [route.params]);
 
     function handleHorarioChange(event, selectedTime) {
         setShowHorarioPicker(false);
@@ -37,10 +46,15 @@ export default function Details({ navigation, route }) {
         const HorarioDocRef = doc(database, "agendamento", id);
         const dataDocRef = doc(database, "agendamento", id);
 
-        updateDoc(HorarioDocRef, { horario: hora })
+        const horaFormatada = hora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const offset = data.getTimezoneOffset() * 60000;
+        const dataLocal = new Date(data.getTime() - offset);
+        const dataFormatada = dataLocal.toISOString().split('T')[0];
+
+        updateDoc(HorarioDocRef, { horario: horaFormatada })
             .then(() => {
                 console.log("Horário atualizado com sucesso!");
-                updateDoc(dataDocRef, { data: data })
+                updateDoc(dataDocRef, { data: dataFormatada })
                     .then(() => {
                         console.log("Data atualizada com sucesso!");
                         Alert.alert("Sucesso", "Os dados foram salvos com sucesso.");
@@ -76,19 +90,24 @@ export default function Details({ navigation, route }) {
                         <Text style={styles.timeButtonText}>Selecione o Horário</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.timeButton} onPress={() => setShowDatePicker(true)}>
-                        <Text style={styles.timeButtonText}>Selecione a Data</Text>
-                    </TouchableOpacity>
-
                     {showHorarioPicker && (
                         <DateTimePicker
                             testID="dateTimePicker"
                             value={horarioEdit}
                             mode={'time'}
                             is24Hour={true}
+                            display="spinner"  // Mudança para um estilo mais moderno
                             onChange={handleHorarioChange}
                         />
                     )}
+
+                    <Text style={styles.selectedText}>
+                        Horário selecionado: {horarioEdit.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    </Text>
+
+                    <TouchableOpacity style={styles.timeButton} onPress={() => setShowDatePicker(true)}>
+                        <Text style={styles.timeButtonText}>Selecione a Data</Text>
+                    </TouchableOpacity>
 
                     {showDatePicker && (
                         <DateTimePicker
@@ -96,9 +115,14 @@ export default function Details({ navigation, route }) {
                             value={dataEdit}
                             mode={'date'}
                             is24Hour={true}
+                            display="spinner"  // Mudança para um estilo mais moderno
                             onChange={handleDateChange}
                         />
                     )}
+
+                    <Text style={styles.selectedText}>
+                        Data selecionada: {dataEdit.toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </Text>
 
                     <TouchableOpacity
                         style={styles.btnsave}
@@ -108,7 +132,7 @@ export default function Details({ navigation, route }) {
                 </View>
             </View>
         </View>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
@@ -177,5 +201,12 @@ const styles = StyleSheet.create({
         color: '#fff',
         width: '100%',
         maxWidth: 300,
-    }
+    },
+    selectedText: {
+        marginTop: 10,
+        fontSize: 16,
+        color: '#000',
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
 });
