@@ -1,28 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, Text, ScrollView } from 'react-native';
+import { View, Image, TouchableOpacity, StyleSheet, Text, ScrollView, Alert } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { auth, database, firestore, getDocs} from '../Config/firebaseconfig';
+import { auth, database, getDocs, deleteDoc, updateDoc, doc } from '../Config/firebaseconfig';
 import Loading from './Loading';
-import {collection, query, where} from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 
 export default function BarbeiroHome({ navigation }) {
-
   const [isLoading, setIsLoading] = useState(true);
   const [agendamentos, setAgendamentos] = useState([]);
   const [barbeiroLogado, setBarbeiroLogado] = useState(null);
-  const [nomebarbeiro, setNomebarbeiro] = useState([]);
+  const [barbeiros, setBarbeiros] = useState([]);
 
   const useBarbeirosRef = query(
     collection(database, "cliente"),
     where("role", "==", "barbeiro")
   );
   const useAgendamentosRef = collection(database, "agendamento");
-  const [barbeiros, setBarbeiros] = useState([]);
 
   useEffect(() => {
     setTimeout(() => {
       setIsLoading(false);
-    }, 2000); // 2 segundos de delay que o marcos não gosta
+    }, 2000);
   }, []);
 
   useEffect(() => {
@@ -30,7 +28,7 @@ export default function BarbeiroHome({ navigation }) {
       try {
         const currentUser = auth.currentUser;
         if (currentUser) {
-          setBarbeiroLogado(currentUser.uid); // armazena o ID do usuario q ta logado
+          setBarbeiroLogado(currentUser.uid);
         } else {
           console.log('Nenhum usuário está logado');
         }
@@ -41,7 +39,6 @@ export default function BarbeiroHome({ navigation }) {
 
     fetchCurrentUser();
     getBarbeiros();
-
   }, []);
 
   const getBarbeiros = async () => {
@@ -52,28 +49,24 @@ export default function BarbeiroHome({ navigation }) {
         id: doc.id,
       }));
       setBarbeiros(Lbarbeiros);
-      console.log(Lbarbeiros)
+      console.log(Lbarbeiros);
     } catch (error) {
-      console.error("Erro ao buscar Rotas: ", error);
-    } 
+      console.error("Erro ao buscar barbeiros: ", error);
+    }
   };
 
   useEffect(() => {
     const getAgendamentos = async () => {
       const currentUser = auth.currentUser;
       if (currentUser) {
-        // Encontra o índice do barbeiro na lista de barbeiros
         const barbeiroIndex = barbeiros.findIndex(barbeiro => barbeiro.email === currentUser.email);
-
-        // Verifica se o barbeiro foi encontrado
         if (barbeiroIndex !== -1) {
-          const barbeiroNome = barbeiros[barbeiroIndex].nome; 
-
-          // Filtra os agendamentos pelo nome do barbeiro
+          const barbeiroNome = barbeiros[barbeiroIndex].nome;
           const q = query(useAgendamentosRef, where('barbeiro', '==', barbeiroNome));
           const agendamentosData = await getDocs(q);
           const agendamentoList = agendamentosData.docs.map((doc) => ({
             ...doc.data(),
+            id: doc.id,
           }));
           setAgendamentos(agendamentoList);
           console.log(agendamentoList);
@@ -83,8 +76,75 @@ export default function BarbeiroHome({ navigation }) {
       }
     };
     getAgendamentos();
-  }, [barbeiros]); // Adiciona barbeiros como dependência do useEffect
+  }, [barbeiros]);
 
+  // Função para obter o valor do serviço a partir da tabela 'servico'
+  const getServicoValor = async (servico) => {
+    try {
+      const servicoRef = query(
+        collection(database, "servico"),
+        where("tipo", "==", servico)
+      );
+      const servicoSnap = await getDocs(servicoRef);
+      if (!servicoSnap.empty) {
+        const servicoData = servicoSnap.docs[0].data();
+        return servicoData.valor; // Retorna o valor do serviço
+      } else {
+        console.error('Serviço não encontrado');
+        return 0;
+      }
+    } catch (error) {
+      console.error('Erro ao buscar o valor do serviço:', error);
+      return 0;
+    }
+  };
+
+  // Função para acumular o valor no saldo do barbeiro
+  const acumularValorBarbeiro = async (valor, barbeiroId) => {
+    try {
+      const barbeiroDocRef = doc(database, "cliente", barbeiroId);
+      const barbeiroDocSnap = await getDoc(barbeiroDocRef); // Use getDoc para pegar o documento individual
+      if (barbeiroDocSnap.exists()) {
+        const barbeiroData = barbeiroDocSnap.data();
+        const novoSaldo = (barbeiroData.saldo || 0) + valor; // Acumula o saldo
+        await updateDoc(barbeiroDocRef, { saldo: novoSaldo });
+        console.log('Saldo atualizado:', novoSaldo);
+      } else {
+        console.log('Barbeiro não encontrado.');
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar o saldo do barbeiro:', error);
+    }
+  };
+
+
+  // Função para confirmar que o cliente veio ou não
+  const handleConfirmacao = async (idAgendamento, servico, veio) => {
+    const mensagem = veio
+      ? 'Você confirma que o cliente veio?'
+      : 'Você confirma que o cliente não veio?';
+    
+    Alert.alert(
+      'Confirmação',
+      mensagem,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Confirmar',
+          onPress: async () => {
+            if (veio) {
+              const valorServico = await getServicoValor(servico); // Obter valor do serviço
+              await acumularValorBarbeiro(valorServico, barbeiroLogado); // Acumular valor no saldo do barbeiro
+            }
+            excluirAgendamento(idAgendamento); // Excluir agendamento
+          },
+        },
+      ],
+    );
+  };
 
   if (isLoading) {
     return <Loading />;
@@ -112,7 +172,21 @@ export default function BarbeiroHome({ navigation }) {
                 <Text style={styles.agendamentoText}>Horário: {agendamento.horario}</Text>
                 <Text style={styles.agendamentoText}>Serviço: {agendamento.servico}</Text>
                 <Text style={styles.agendamentoText}>Cliente: {agendamento.nomeCliente}</Text>
-                <Text style={styles.agendamentoText}></Text>
+                
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity
+                    style={styles.buttonConfirm}
+                    onPress={() => handleConfirmacao(agendamento.id, agendamento.servico, true)}
+                  >
+                    <Text style={styles.buttonText}>Cliente veio</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.buttonCancel}
+                    onPress={() => handleConfirmacao(agendamento.id, agendamento.servico, false)}
+                  >
+                    <Text style={styles.buttonText}>Cliente não veio</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             ))
           ) : (
@@ -120,7 +194,7 @@ export default function BarbeiroHome({ navigation }) {
           )}
         </View>
 
-        {/* blg de baixo */}
+        {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
             <FontAwesome5 name="phone" size={14} color="#b69045" /> (48) 99933-2071
@@ -164,6 +238,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginTop: 20,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  buttonConfirm: {
+    backgroundColor: 'green',
+    padding: 10,
+    borderRadius: 5,
+  },
+  buttonCancel: {
+    backgroundColor: 'red',
+    padding: 10,
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   banner: {
     width: '100%',
