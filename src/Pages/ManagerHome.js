@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Image, TouchableOpacity, StyleSheet, Text, ScrollView } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
 import { auth, database } from '../Config/firebaseconfig'; 
 
 export default function ManagerHome({ navigation }) {
@@ -11,6 +11,7 @@ export default function ManagerHome({ navigation }) {
   const [barbeiroLogado, setBarbeiroLogado] = useState(null);
   const [barbeiros, setBarbeiros] = useState([]);
   const [SelectedBarbeiro, setSelectedBarbeiro] = useState(null);
+  const [faturamentoBarbeiros, setFaturamentoBarbeiros] = useState([]);
 
   const useBarbeirosRef = query(
     collection(database, "cliente"),
@@ -40,7 +41,24 @@ export default function ManagerHome({ navigation }) {
 
     fetchCurrentUser();
     getBarbeiros();
+    getFaturamentoBarbeiros(); // Chama a função ao carregar a página
   }, []);
+
+  // Função para buscar o faturamento diário dos barbeiros
+  const getFaturamentoBarbeiros = async () => {
+    try {
+      const faturamentoRef = collection(database, "faturamento_diario");
+      const faturamentoSnap = await getDocs(faturamentoRef);
+      const faturamentoList = faturamentoSnap.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      }));
+      setFaturamentoBarbeiros(faturamentoList);
+      console.log(faturamentoList);
+    } catch (error) {
+      console.error("Erro ao buscar o faturamento diário dos barbeiros: ", error);
+    }
+  };
 
   const getBarbeiros = async () => {
     try {
@@ -71,6 +89,7 @@ export default function ManagerHome({ navigation }) {
 
     getAgendamentos();
   }, [SelectedBarbeiro]);
+
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       {/* Banner */}
@@ -85,34 +104,49 @@ export default function ManagerHome({ navigation }) {
       {/* Conteúdo Principal */}
       <View style={styles.container}>
         <View style={styles.content}>
-        <Picker
-          selectedValue={SelectedBarbeiro}
-          style={styles.picker}
-          onValueChange={(itemValue) => {
-            console.log('Selecionado:', itemValue);
-            setSelectedBarbeiro(itemValue); // Defina o nome do barbeiro selecionado
-          }}
-        >
-          {barbeiros.map((barbeiro) => (
-            <Picker.Item key={barbeiro.nome} label={barbeiro.nome} value={barbeiro.nome} />
-          ))}
-        </Picker>
+          <Picker
+            selectedValue={SelectedBarbeiro}
+            style={styles.picker}
+            onValueChange={(itemValue) => {
+              console.log('Selecionado:', itemValue);
+              setSelectedBarbeiro(itemValue); 
+            }}
+          >
+            {barbeiros.map((barbeiro) => (
+              <Picker.Item key={barbeiro.nome} label={barbeiro.nome} value={barbeiro.nome} />
+            ))}
+          </Picker>
 
+          {/* Exibe o faturamento diário dos barbeiros */}
+          <View style={styles.faturamentoContainer}>
+            <Text style={styles.faturamentoTitle}>Faturamento Diário dos Barbeiros</Text>
+            {faturamentoBarbeiros.map((barbeiro) => (
+              <View key={barbeiro.id} style={styles.faturamentoItem}>
+                <Text style={styles.faturamentoText}>
+                  {barbeiro.nome} 
+                  - R$ {barbeiro.faturamento || 0}
+                </Text>
+              </View>
+            ))}
+          </View>
 
           {/* Lista de Agendamentos */}
-          {agendamentos.length > 0 ? (
-            agendamentos.map((agendamento) => (
-              <View key={agendamento.id} style={styles.agendamentoContainer}>
-                <Text style={styles.agendamentoText}>Data: {agendamento.data}</Text>
-                <Text style={styles.agendamentoText}>Horário: {agendamento.horario}</Text>
-                <Text style={styles.agendamentoText}>Serviço: {agendamento.servico}</Text>
-                <Text style={styles.agendamentoText}>Cliente: {agendamento.nomeCliente}</Text>
-                <Text style={styles.agendamentoText}></Text>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.centeredText}>Nenhum agendamento encontrado</Text>
-          )}
+          <View style={styles.agendamentosContainer}>
+            <Text style={styles.agendamentosTitle}>Agendamentos</Text>
+            {agendamentos.length > 0 ? (
+              agendamentos.map((agendamento) => (
+                <View key={agendamento.id} style={styles.agendamentoContainer}>
+                  <Text style={styles.agendamentoText}>Data: {agendamento.data}</Text>
+                  <Text style={styles.agendamentoText}>Horário: {agendamento.horario}</Text>
+                  <Text style={styles.agendamentoText}>Serviço: {agendamento.servico}</Text>
+                  <Text style={styles.agendamentoText}>Cliente: {agendamento.nomeCliente}</Text>
+                  <Text style={styles.agendamentoText}></Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.centeredText}>Nenhum agendamento encontrado</Text>
+            )}
+          </View>
         </View>
 
         {/* blg de baixo */}
@@ -169,31 +203,56 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  formContainer: {
+  picker: {
     width: '100%',
-    alignItems: 'center',
+    marginBottom: 20,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+  },
+  faturamentoContainer: {
+    marginBottom: 20,
+    padding: 10,
     borderWidth: 1,
     borderColor: '#b69045',
     borderRadius: 10,
-    padding: 25,
     backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 5,
   },
-  imagemesa: {
-    width: 220,
-    height: 140,
+  faturamentoTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  faturamentoItem: {
+    marginBottom: 5,
+  },
+  faturamentoText: {
+    color: '#000',
+  },
+  agendamentosContainer: {
+    marginBottom: 20,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#b69045',
     borderRadius: 10,
-    resizeMode: 'cover',
+    backgroundColor: '#fff',
   },
-  addressText: {
-    textAlign: 'center',
-    marginTop: 15,
-    fontSize: 14,
-    color: '#b69045',
+  agendamentosTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  agendamentoContainer: {
+    marginBottom: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#b69045',
+    borderRadius: 10,
+    backgroundColor: '#fff',
+  },
+  agendamentoText: {
+    color: '#000',
   },
   centeredText: {
     textAlign: 'center',
@@ -201,20 +260,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 25,
     color: '#b69045',
-  },
-  button: {
-    marginTop: 20,
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: '#b69045',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-  },
-  buttonText: {
-    color: '#b69045',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   footer: {
     marginTop: 30,
@@ -228,24 +273,5 @@ const styles = StyleSheet.create({
     color: '#b69045',
     fontSize: 14,
     fontWeight: 'bold',
-  },
-  picker: {
-    width: '100%',
-    marginBottom: 20,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
-  },
-  agendamentoContainer: {
-    marginBottom: 10,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#b69045',
-    borderRadius: 10,
-    backgroundColor: '#fff',
-  },
-  agendamentoText: {
-    color: '#000',
   },
 });

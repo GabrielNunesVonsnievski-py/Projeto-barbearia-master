@@ -3,7 +3,7 @@ import { View, Image, TouchableOpacity, StyleSheet, Text, ScrollView, Alert } fr
 import { FontAwesome5 } from '@expo/vector-icons';
 import { auth, database, getDocs, deleteDoc, updateDoc, doc } from '../Config/firebaseconfig';
 import Loading from './Loading';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, getDoc, setDoc } from 'firebase/firestore';
 
 export default function BarbeiroHome({ navigation }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -55,26 +55,28 @@ export default function BarbeiroHome({ navigation }) {
     }
   };
 
-  useEffect(() => {
-    const getAgendamentos = async () => {
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        const barbeiroIndex = barbeiros.findIndex(barbeiro => barbeiro.email === currentUser.email);
-        if (barbeiroIndex !== -1) {
-          const barbeiroNome = barbeiros[barbeiroIndex].nome;
-          const q = query(useAgendamentosRef, where('barbeiro', '==', barbeiroNome));
-          const agendamentosData = await getDocs(q);
-          const agendamentoList = agendamentosData.docs.map((doc) => ({
-            ...doc.data(),
-            id: doc.id,
-          }));
-          setAgendamentos(agendamentoList);
-          console.log(agendamentoList);
-        } else {
-          console.log('Barbeiro não encontrado na lista.');
-        }
+  
+  const getAgendamentos = async () => {
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      const barbeiroIndex = barbeiros.findIndex(barbeiro => barbeiro.email === currentUser.email);
+      if (barbeiroIndex !== -1) {
+        const barbeiroNome = barbeiros[barbeiroIndex].nome;
+        const q = query(useAgendamentosRef, where('barbeiro', '==', barbeiroNome));
+        const agendamentosData = await getDocs(q);
+        const agendamentoList = agendamentosData.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
+        setAgendamentos(agendamentoList);
+        console.log(agendamentoList);
+      } else {
+        console.log('Barbeiro não encontrado na lista.');
       }
-    };
+    }
+  };
+
+  useEffect(() => {
     getAgendamentos();
   }, [barbeiros]);
 
@@ -99,31 +101,41 @@ export default function BarbeiroHome({ navigation }) {
     }
   };
 
-  // Função para acumular o valor no saldo do barbeiro
-  const acumularValorBarbeiro = async (valor, barbeiroId) => {
+  // Função para acumular o valor no faturamento diário do barbeiro
+  const acumularFaturamentoDiario = async (valor, barbeiroId) => {
     try {
-      const barbeiroDocRef = doc(database, "cliente", barbeiroId);
-      const barbeiroDocSnap = await getDoc(barbeiroDocRef); // Use getDoc para pegar o documento individual
+      const barbeiroDocRef = doc(database, "faturamento_diario", barbeiroId); 
+      const barbeiroDocSnap = await getDoc(barbeiroDocRef);
+  
       if (barbeiroDocSnap.exists()) {
         const barbeiroData = barbeiroDocSnap.data();
-        const novoSaldo = (barbeiroData.saldo || 0) + valor; // Acumula o saldo
-        await updateDoc(barbeiroDocRef, { saldo: novoSaldo });
-        console.log('Saldo atualizado:', novoSaldo);
+        const novoFaturamento = (barbeiroData.faturamento || 0) + valor; 
+        await updateDoc(barbeiroDocRef, { faturamento: novoFaturamento });
+        console.log('Faturamento diário atualizado:', novoFaturamento);
       } else {
-        console.log('Barbeiro não encontrado.');
+        await setDoc(barbeiroDocRef, { faturamento: valor });
+        console.log('Novo faturamento diário criado:', valor);
       }
     } catch (error) {
-      console.error('Erro ao atualizar o saldo do barbeiro:', error);
+      console.error('Erro ao atualizar o faturamento diário do barbeiro:', error);
     }
   };
 
+  const excluirAgendamento = async (idAgendamento) => {
+    try {
+      const agendamentoRef = doc(database, "agendamento", idAgendamento);
+      await deleteDoc(agendamentoRef);
+      console.log(`Agendamento ${idAgendamento} excluído com sucesso`);
+    } catch (error) {
+      console.error("Erro ao excluir o agendamento:", error);
+    }
+  };
 
-  // Função para confirmar que o cliente veio ou não
   const handleConfirmacao = async (idAgendamento, servico, veio) => {
     const mensagem = veio
       ? 'Você confirma que o cliente veio?'
       : 'Você confirma que o cliente não veio?';
-    
+
     Alert.alert(
       'Confirmação',
       mensagem,
@@ -137,7 +149,7 @@ export default function BarbeiroHome({ navigation }) {
           onPress: async () => {
             if (veio) {
               const valorServico = await getServicoValor(servico); // Obter valor do serviço
-              await acumularValorBarbeiro(valorServico, barbeiroLogado); // Acumular valor no saldo do barbeiro
+              await acumularFaturamentoDiario(valorServico, barbeiroLogado); // Acumular valor no faturamento diário
             }
             excluirAgendamento(idAgendamento); // Excluir agendamento
           },
