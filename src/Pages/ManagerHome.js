@@ -122,10 +122,13 @@ export default function ManagerHome({ navigation }) {
             <Text style={styles.faturamentoTitle}>Faturamento Diário dos Barbeiros</Text>
             {faturamentoBarbeiros.map((barbeiro) => (
               <View key={barbeiro.id} style={styles.faturamentoItem}>
-                <Text style={styles.faturamentoText}>
-                  {barbeiro.nome} 
-                  - R$ {barbeiro.faturamento || 0}
-                </Text>
+                {/* Encontra o barbeiro correspondente na lista de barbeiros */}
+                {barbeiros.find((b) => b.id === barbeiro.id) && (
+                  <Text style={styles.faturamentoText}>
+                    {barbeiros.find((b) => b.id === barbeiro.id).nome} 
+                    - R$ {barbeiro.faturamento || 0}
+                  </Text>
+                )}
               </View>
             ))}
           </View>
