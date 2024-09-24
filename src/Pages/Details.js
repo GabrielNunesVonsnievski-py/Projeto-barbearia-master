@@ -1,22 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, Modal, ScrollView } from 'react-native';
 import { database, doc, updateDoc } from "../Config/firebaseconfig";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Loading from './Loading';
+import { Picker } from '@react-native-picker/picker';
 
 export default function Details({ navigation, route }) {
-
     const [isLoading, setIsLoading] = useState(true);
     const [horarioEdit, setHorarioEdit] = useState(route.params.hora ? new Date(route.params.hora) : new Date());
     const [dataEdit, setDataEdit] = useState(route.params.data ? new Date(route.params.data) : new Date());
-    const [showHorarioPicker, setShowHorarioPicker] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const [horariosDisponiveis, setHorariosDisponiveis] = useState([]);
+    const [horarioSelecionado, setHorarioSelecionado] = useState('');
+    const [showPickerModal, setShowPickerModal] = useState(false);
     const idagendamento = route.params.id;
 
     useEffect(() => {
         setTimeout(() => {
             setIsLoading(false);
-        }, 2000); // 2 segundos de delay
+        }, 2000);
     }, []);
 
     useEffect(() => {
@@ -28,11 +30,30 @@ export default function Details({ navigation, route }) {
         }
     }, [route.params]);
 
-    function handleHorarioChange(event, selectedTime) {
-        setShowHorarioPicker(false);
-        if (selectedTime) {
-            setHorarioEdit(selectedTime);
-        }
+    useEffect(() => {
+        const gerarHorariosDisponiveis = () => {
+            const horarios = [];
+            const inicio = new Date();
+            inicio.setHours(8, 0, 0, 0);
+            const fim = new Date();
+            fim.setHours(17, 30, 0, 0);
+
+            for (let hora = inicio; hora <= fim; hora.setMinutes(hora.getMinutes() + 30)) {
+                horarios.push(hora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+            }
+            setHorariosDisponiveis(horarios);
+        };
+
+        gerarHorariosDisponiveis();
+    }, []);
+
+    function handleHorarioChange(itemValue) {
+        const [hour, minute] = itemValue.split(':');
+        const novoHorario = new Date();
+        novoHorario.setHours(parseInt(hour), parseInt(minute), 0, 0);
+        setHorarioEdit(novoHorario);
+        setHorarioSelecionado(itemValue);
+        setShowPickerModal(false);
     }
 
     function handleDateChange(event, selectedDate) {
@@ -74,7 +95,7 @@ export default function Details({ navigation, route }) {
     }
 
     return (
-        <View style={styles.container}>
+        <ScrollView style={styles.container}>
             <View style={styles.banner}>
                 <Image
                     source={{ uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQs7WRs_S875bpXggXPJ7A748m8J7XmKX08dQ&s' }}
@@ -86,23 +107,12 @@ export default function Details({ navigation, route }) {
                 <View style={styles.content}>
                     <Text style={styles.txtdescription}> Editar Horário </Text>
 
-                    <TouchableOpacity style={styles.timeButton} onPress={() => setShowHorarioPicker(true)}>
+                    <TouchableOpacity style={styles.timeButton} onPress={() => setShowPickerModal(true)}>
                         <Text style={styles.timeButtonText}>Selecione o Horário</Text>
                     </TouchableOpacity>
 
-                    {showHorarioPicker && (
-                        <DateTimePicker
-                            testID="dateTimePicker"
-                            value={horarioEdit}
-                            mode={'time'}
-                            is24Hour={true}
-                            display="spinner"  // Mudança para um estilo mais moderno
-                            onChange={handleHorarioChange}
-                        />
-                    )}
-
                     <Text style={styles.selectedText}>
-                        Horário selecionado: {horarioEdit.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        Horário selecionado: {horarioSelecionado}
                     </Text>
 
                     <TouchableOpacity style={styles.timeButton} onPress={() => setShowDatePicker(true)}>
@@ -115,7 +125,7 @@ export default function Details({ navigation, route }) {
                             value={dataEdit}
                             mode={'date'}
                             is24Hour={true}
-                            display="spinner"  // Mudança para um estilo mais moderno
+                            display="spinner"
                             onChange={handleDateChange}
                         />
                     )}
@@ -129,9 +139,35 @@ export default function Details({ navigation, route }) {
                         onPress={() => { editHorario(horarioEdit, idagendamento, dataEdit) }}>
                         <Text style={styles.txtbtnsave}> Salvar horário </Text>
                     </TouchableOpacity>
+
+                    {/* Modal para o Picker */}
+                    <Modal
+                        animationType="slide"
+                        transparent={true}
+                        visible={showPickerModal}
+                        onRequestClose={() => setShowPickerModal(false)}
+                    >
+                        <View style={styles.modalContainer}>
+                            <View style={styles.modalContent}>
+                                <Picker
+                                    selectedValue={horarioSelecionado}
+                                    onValueChange={handleHorarioChange}
+                                    style={styles.picker}
+                                >
+                                    <Picker.Item label="Selecione o Horário" value="" />
+                                    {horariosDisponiveis.map((horario, index) => (
+                                        <Picker.Item key={index} label={horario} value={horario} />
+                                    ))}
+                                </Picker>
+                                <TouchableOpacity onPress={() => setShowPickerModal(false)} style={styles.closeButton}>
+                                    <Text style={styles.closeButtonText}>Fechar</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </Modal>
                 </View>
             </View>
-        </View>
+        </ScrollView>
     );
 }
 
@@ -208,5 +244,33 @@ const styles = StyleSheet.create({
         color: '#000',
         fontWeight: 'bold',
         textAlign: 'center',
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        width: '80%',
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        padding: 20,
+    },
+    closeButton: {
+        marginTop: 15,
+        padding: 10,
+        backgroundColor: '#b69045',
+        borderRadius: 10,
+        alignItems: 'center',
+    },
+    closeButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    picker: {
+        height: 200,
+        width: '100%',
     },
 });
