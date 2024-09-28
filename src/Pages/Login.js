@@ -3,10 +3,12 @@ import { View, Image, TextInput, TouchableOpacity, StyleSheet, Text, Alert, Keyb
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { auth } from '../Config/firebaseconfig';
+import { FontAwesome5 } from '@expo/vector-icons'; // Para ícone do olho
 
 export default function Login({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // Estado para controlar visibilidade da senha
 
   const LoginUser = async () => {
     try {
@@ -76,14 +78,22 @@ export default function Login({ navigation }) {
               keyboardType="email-address"
               autoCapitalize="none"
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Senha"
-              placeholderTextColor="rgba(182, 144, 69, 0.5)"
-              onChangeText={setPassword}
-              value={password}
-              secureTextEntry
-            />
+            
+            {/* Campo de Senha com Botão de Mostrar/Ocultar Senha */}
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.inputPassword}
+                placeholder="Senha"
+                placeholderTextColor="rgba(182, 144, 69, 0.5)"
+                onChangeText={setPassword}
+                value={password}
+                secureTextEntry={!showPassword} // Controla visibilidade da senha (olho da senha)
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <FontAwesome5 name={showPassword ? 'eye-slash' : 'eye'} size={20} color="rgba(182, 144, 69, 0.8)" />
+              </TouchableOpacity>
+            </View>
+
             <TouchableOpacity style={styles.btnLogin} onPress={LoginUser}>
               <Text style={styles.txtbtnLogin}>LOGIN</Text>
             </TouchableOpacity>
@@ -155,6 +165,21 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: 'black',
     width: '100%',
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#b69045',
+    borderRadius: 20,
+    height: 40,
+    paddingHorizontal: 10,
+    marginBottom: 15,
+    width: '100%',
+  },
+  inputPassword: {
+    flex: 1,
+    color: 'black',
   },
   btnLogin: {
     backgroundColor: '#b69045',

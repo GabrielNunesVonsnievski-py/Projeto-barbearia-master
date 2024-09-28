@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { auth } from '../Config/firebaseconfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { FontAwesome5 } from '@expo/vector-icons'; // Importando ícones
 import Loading from './Loading';
 
 export default function Cadastrar() {
@@ -13,8 +14,9 @@ export default function Cadastrar() {
   const [name, setName] = useState('');
   const [telefone, setTelefone] = useState('');
   const [endereco, setEndereco] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false); // Estado para visibilidade da senha
   const navigation = useNavigation();
-  const db = getFirestore(); // Obter a instância do Firestore
+  const db = getFirestore();
 
   useEffect(() => {
     setTimeout(() => {
@@ -27,12 +29,11 @@ export default function Cadastrar() {
       Alert.alert('Erro', 'Por favor, preencha todos os campos.');
       return;
     }
-  
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       console.log('User registered:', userCredential.user);
-  
-      // Salvar dados adicionais do usuário no Firestore
+
       const userRef = doc(db, 'cliente', userCredential.user.uid);
       await setDoc(userRef, {
         nome: name,
@@ -41,7 +42,7 @@ export default function Cadastrar() {
         email: email,
         role: 'user'
       });
-  
+
       Alert.alert('Sucesso', 'Conta criada com sucesso!');
       navigation.navigate('Login');
     } catch (error) {
@@ -61,7 +62,6 @@ export default function Cadastrar() {
         style={styles.innerContainer}
       >
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
-          {/* Banner */}
           <View style={styles.banner}>
             <Image
               source={{ uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQs7WRs_S875bpXggXPJ7A748m8J7XmKX08dQ&s' }}
@@ -70,7 +70,6 @@ export default function Cadastrar() {
             <Text style={styles.bannerText}>MAJESTOSO</Text>
           </View>
 
-          {/* Formulário */}
           <View style={styles.formContainer}>
             <Text style={styles.title}>Cadastro</Text>
             <TextInput
@@ -82,14 +81,23 @@ export default function Cadastrar() {
               keyboardType="email-address"
               autoCapitalize="none"
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Senha"
-              placeholderTextColor="rgba(182, 144, 69, 0.5)"
-              onChangeText={setPassword}
-              value={password}
-              secureTextEntry
-            />
+            
+            {/* Campo de Senha com ícone para visibilidade */}
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.inputPassword}
+                placeholder="Senha"
+                placeholderTextColor="rgba(182, 144, 69, 0.5)"
+                onChangeText={setPassword}
+                value={password}
+                secureTextEntry={!passwordVisible}
+              />
+              <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)}>
+                <FontAwesome5 name={passwordVisible ? 'eye' : 'eye-slash'} size={24} color="#b69045" />
+              </TouchableOpacity>
+
+            </View>
+
             <TextInput
               style={styles.input}
               placeholder="Nome"
@@ -150,7 +158,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 20,
-    paddingTop: 60, // Ajustado para criar espaço para a área de status
+    paddingTop: 60,
     marginBottom: 20,
   },
   image: {
@@ -185,6 +193,20 @@ const styles = StyleSheet.create({
     color: 'black',
     width: '100%',
   },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#b69045',
+    borderRadius: 20,
+    height: 40,
+    marginBottom: 15,
+    paddingHorizontal: 10,
+  },
+  inputPassword: {
+    flex: 1,
+    color: 'black',
+  },
   signUpButton: {
     backgroundColor: '#b69045',
     borderRadius: 20,
@@ -212,7 +234,6 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 20,
     alignItems: 'center',
-   
   },
   footerText: {
     color: '#b69045',
