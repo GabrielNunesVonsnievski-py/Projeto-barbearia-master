@@ -20,6 +20,8 @@ export default function Agendamento({ navigation }) {
   const [local, setLocal] = useState('local1');
   const [data, setData] = useState(dayjs());
   const [clienteNome, setClienteNome] = useState('');
+  const [intervaloTempo, setIntervaloTempo] = useState([]); 
+  const [hora, setHora] = useState('');
 
   useEffect(() => {
     setTimeout(() => {
@@ -135,20 +137,53 @@ export default function Agendamento({ navigation }) {
   const checkDisponibilidade = async (data, hora, barbeiroSelecionado) => {
     try {
       const agendamentoCollection = collection(database, "agendamento");
+      const dataString = dayjs(data).format('YYYY-MM-DD'); // Converter data para string
       const q = query(agendamentoCollection, 
-        where("data", "==", data), 
+        where("data", "==", dataString), 
         where("horario", "==", hora), 
         where("barbeiro", "==", barbeiroSelecionado)
       );
-  
+
       const querySnapshot = await getDocs(q);
-      return querySnapshot.empty;
+      return querySnapshot.empty; // True if available, False if booked
     } catch (error) {
       console.error("Error checking availability: ", error);
       return false;
     }
   };
-  
+
+
+  useEffect(() => {
+    // Update available time slots based on selected date and barber
+    const updateAvailableTimeSlots = async () => {
+      const barbeiroSelecionado = barbeiros.find(b => b.id === barbeiro);
+      if (barbeiroSelecionado) {
+        const availableTimeSlots = [];
+        for (const intervalo of intervaloTempo) {
+          const isAvailable = await checkDisponibilidade(data, intervalo, barbeiroSelecionado.nome);
+          if (isAvailable) {
+            availableTimeSlots.push(intervalo);
+          }
+        }
+        setIntervaloTempo(availableTimeSlots); // Update the time slots to only show available ones
+        if (availableTimeSlots.length > 0) {
+          setHora(availableTimeSlots[0]); // Set the initial selected time to the first available slot
+        }
+      }
+    };
+
+    if (barbeiro && data) { // Update only when both barber and date are selected
+      updateAvailableTimeSlots();
+    }
+  }, [barbeiro, data]); // Run effect when barbeiro or data changes
+
+  useEffect(() => {
+    setIntervaloTempo(IntervalodeTempo()); 
+    if (intervaloTempo.length > 0) {
+      setHora(intervaloTempo[0]);
+    }
+  }, []);
+
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
     const diaNaoUtil = dayjs(currentDate).day(); //0 = domingo, 6 = sabado
@@ -185,8 +220,7 @@ export default function Agendamento({ navigation }) {
     return intervaloTempo;
   };
 
-  const [intervaloTempo, setIntervaloTempo] = useState(IntervalodeTempo());
-  const [hora, setHora] = useState(intervaloTempo[0]);
+  
 
   const showDatepicker = () => {
     setShowDate(true);
@@ -272,13 +306,13 @@ export default function Agendamento({ navigation }) {
               <View>
                 <Text style={styles.label}>Escolha o horário:</Text>
                 <Picker
-                   selectedValue={hora}
-                   onValueChange={(itemValue) => setHora(itemValue)} 
-                   style={{ height: 100, width: 200, margin:70, textAlign: 'center', alignContent:'center' }}
-                 >
-                   {intervaloTempo.map((intervalo, index) => (
-                     <Picker.Item key={index} label={intervalo} value={intervalo} />
-                   ))}
+                  selectedValue={hora}
+                  onValueChange={(itemValue) => setHora(itemValue)} 
+                  style={styles.pickerHora}
+                >
+                  {intervaloTempo.map((intervalo, index) => (
+                    <Picker.Item key={index} label={intervalo} value={intervalo} />
+                  ))}
                 </Picker>
               </View>
               )}
@@ -305,6 +339,23 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     marginRight: 120,
     color: '#b69045',
+  },
+  pickerHora:{
+    height: 100, 
+    width: 200, 
+    margin:70, 
+    textAlign: 'center', 
+    alignContent:'center',
+  },
+  pickerHoraIndisponivel: {
+    height: 100, 
+    width: 200, 
+    margin:70, 
+    textAlign: 'center', 
+    alignContent:'center',
+    color: '#ff3838',
+    textColor: '#ff3838',
+
   },
   DateTimePickerData:{
     alignItems: 'center',
@@ -411,4 +462,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
