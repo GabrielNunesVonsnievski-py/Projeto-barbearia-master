@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, TextInput, Platform } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, TextInput, Platform, } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
-import { database, auth, collection, addDoc, query, where, getDocs, updateDoc } from "../Config/firebaseconfig";
+import { database, auth, collection, addDoc, query, where, getDocs, updateDoc, fetchAvailableTimeSlots } from "../Config/firebaseconfig";
 import Loading from './Loading';
 
 export default function Agendamento({ navigation }) {
@@ -145,44 +145,12 @@ export default function Agendamento({ navigation }) {
       );
 
       const querySnapshot = await getDocs(q);
-      return querySnapshot.empty; // True if available, False if booked
+      return querySnapshot.empty; // True == disponicel, False == indisponivel 
     } catch (error) {
       console.error("Error checking availability: ", error);
       return false;
     }
   };
-
-
-  useEffect(() => {
-    // Update available time slots based on selected date and barber
-    const updateAvailableTimeSlots = async () => {
-      const barbeiroSelecionado = barbeiros.find(b => b.id === barbeiro);
-      if (barbeiroSelecionado) {
-        const availableTimeSlots = [];
-        for (const intervalo of intervaloTempo) {
-          const isAvailable = await checkDisponibilidade(data, intervalo, barbeiroSelecionado.nome);
-          if (isAvailable) {
-            availableTimeSlots.push(intervalo);
-          }
-        }
-        setIntervaloTempo(availableTimeSlots); // Update the time slots to only show available ones
-        if (availableTimeSlots.length > 0) {
-          setHora(availableTimeSlots[0]); // Set the initial selected time to the first available slot
-        }
-      }
-    };
-
-    if (barbeiro && data) { // Update only when both barber and date are selected
-      updateAvailableTimeSlots();
-    }
-  }, [barbeiro, data]); // Run effect when barbeiro or data changes
-
-  useEffect(() => {
-    setIntervaloTempo(IntervalodeTempo()); 
-    if (intervaloTempo.length > 0) {
-      setHora(intervaloTempo[0]);
-    }
-  }, []);
 
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
@@ -204,6 +172,36 @@ export default function Agendamento({ navigation }) {
       setHora(currentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })); 
     }
   };
+
+  const fetchAvailableTimeSlots = useCallback(async () => {
+    const barbeiroSelecionado = barbeiros.find(b => b.id === barbeiro);
+   if (barbeiroSelecionado && data) {
+      const allTimeSlots = IntervalodeTempo(); // Get all available time slots
+      const availableTimeSlots = [];
+      for (const intervalo of allTimeSlots) {
+        const isAvailable = await checkDisponibilidade(data, intervalo, barbeiroSelecionado.nome);
+        if (isAvailable) {
+          availableTimeSlots.push(intervalo);
+        }
+      }
+      setIntervaloTempo(availableTimeSlots); // Update with only available slots
+    } else {
+      setIntervaloTempo([]); // Clear if no barber or date selected
+    }
+  }, [barbeiro, data]);
+
+
+  useEffect(() => {
+    fetchAvailableTimeSlots();
+  }, [barbeiro, data, fetchAvailableTimeSlots]);
+  
+
+  useEffect(() => {
+    setIntervaloTempo(IntervalodeTempo()); 
+    if (intervaloTempo.length > 0) {
+      setHora(intervaloTempo[0]);
+    }
+  }, []);
 
   const IntervalodeTempo = () => {
     const intervaloTempo = [];
@@ -305,15 +303,15 @@ export default function Agendamento({ navigation }) {
             {showTime && (
               <View>
                 <Text style={styles.label}>Escolha o horário:</Text>
-                <Picker
-                  selectedValue={hora}
-                  onValueChange={(itemValue) => setHora(itemValue)} 
-                  style={styles.pickerHora}
-                >
-                  {intervaloTempo.map((intervalo, index) => (
-                    <Picker.Item key={index} label={intervalo} value={intervalo} />
-                  ))}
-                </Picker>
+                  <Picker
+                    selectedValue={hora}
+                    onValueChange={(itemValue) => setHora(itemValue)} 
+                    style={styles.pickerHora}
+                  >
+                    {intervaloTempo.map((intervalo, index) => (
+                      <Picker.Item key={index} label={intervalo} value={intervalo} />
+                    ))}
+                  </Picker>
               </View>
               )}
           </View>
