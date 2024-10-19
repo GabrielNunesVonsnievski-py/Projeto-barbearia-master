@@ -218,8 +218,37 @@ export default function Agendamento({ navigation }) {
     return intervaloTempo;
   };
 
-  
+  useEffect(() => {
+    if(dayjs(date).isSame(dayjs(), 'day')) {
+      const horarioAtual = dayjs();
+      const horariosFiltrados = IntervalodeTempo().filter(horario => {
+        return dayjs(horario, 'HH:mm').isAfter(horarioAtual); //Impede que o usuario escolha um horario que ja passou
+      });
+      setIntervaloTempo(horariosFiltrados); //define estado com os horarios disponiveis 
+    }
+      else {
+        setIntervaloTempo(IntervalodeTempo()); //Se for outro dia, mostra todos os horarios disponiveis 
+      }
+    }, [date]);
 
+    useEffect(() => {
+      const updateHorariosDisponiveis = () => {
+        if (dayjs(date).isSame(dayjs(), 'day')) { 
+          // Se a data selecionada for o dia atual
+          const horarioAtual = dayjs();
+          const horariosFiltrados = IntervalodeTempo().filter(horario => {
+            return dayjs(horario, 'HH:mm').isAfter(horarioAtual); // Filtra horários após o atual
+          });
+          setIntervaloTempo(horariosFiltrados); // Atualiza com os horários filtrados
+        } else {
+          setIntervaloTempo(IntervalodeTempo()); // Para outros dias, mostra todos os horários
+        }
+      };
+    
+      updateHorariosDisponiveis(); // Atualiza os horários quando a data mudar
+    }, [date]);  // Dependência no `useEffect` que executa ao alterar o `date`
+    
+    
   const showDatepicker = () => {
     setShowDate(true);
   };
@@ -285,11 +314,13 @@ export default function Agendamento({ navigation }) {
             <Text style={styles.selectedDate}>Data selecionada: {dayjs(date).format('DD/MM/YYYY')}</Text>
 
             {showDate && (
-              <DateTimePicker style={styles.DateTimePickerData}
+              <DateTimePicker
+                style={styles.DateTimePickerData}
                 testID="dateTimePicker"
                 value={date}
                 mode={'date'}
                 is24Hour={true}
+                minimumDate={new Date()}  // Define a data mínima como o dia atual
                 onChange={onChange}
               />
             )}
