@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, TextInput, Platform, } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
 import { database, auth, collection, addDoc, query, where, getDocs, updateDoc, fetchAvailableTimeSlots } from "../Config/firebaseconfig";
 import Loading from './Loading';
+import debounce from 'lodash.debounce';
 
 export default function Agendamento({ navigation }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -173,23 +174,27 @@ export default function Agendamento({ navigation }) {
     }
   };
 
-  const fetchAvailableTimeSlots = useCallback(async () => {
-    const barbeiroSelecionado = barbeiros.find(b => b.id === barbeiro);
-   if (barbeiroSelecionado && data) {
-      const allTimeSlots = IntervalodeTempo(); // Get all available time slots
-      const availableTimeSlots = [];
-      for (const intervalo of allTimeSlots) {
-        const isAvailable = await checkDisponibilidade(data, intervalo, barbeiroSelecionado.nome);
-        if (isAvailable) {
-          availableTimeSlots.push(intervalo);
+  const fetchAvailableTimeSlots = useCallback(
+    debounce(async () => {
+      const barbeiroSelecionado = barbeiros.find(b => b.id === barbeiro);
+      if (barbeiroSelecionado && data) {
+        const allTimeSlots = IntervalodeTempo(); // Get all available time slots
+        const availableTimeSlots = [];
+        for (const intervalo of allTimeSlots) {
+          const isAvailable = await checkDisponibilidade(data, intervalo, barbeiroSelecionado.nome);
+          if (isAvailable) {
+            availableTimeSlots.push(intervalo);
+          }
         }
+        setIntervaloTempo(availableTimeSlots); // Update with only available slots
+      } else {
+        setIntervaloTempo([]); // Clear if no barber or date selected
       }
-      setIntervaloTempo(availableTimeSlots); // Update with only available slots
-    } else {
-      setIntervaloTempo([]); // Clear if no barber or date selected
-    }
-  }, [barbeiro, data]);
+    }, 500), // Debounce para 500ms
+    [barbeiro, data]
+  );
 
+  const barbeiroSelecionado = useMemo(() => barbeiros.find(b => b.id === barbeiro), [barbeiros, barbeiro]);
 
   useEffect(() => {
     fetchAvailableTimeSlots();
