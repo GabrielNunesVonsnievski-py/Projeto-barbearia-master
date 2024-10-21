@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, TextInput, Platform, } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
 import { database, auth, collection, addDoc, query, where, getDocs, updateDoc, fetchAvailableTimeSlots } from "../Config/firebaseconfig";
 import Loading from './Loading';
+import debounce from 'lodash.debounce';
 
 export default function Agendamento({ navigation }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -114,7 +115,7 @@ export default function Agendamento({ navigation }) {
       await addDoc(agendamentoCollection, {
         barbeiro: barbeiroSelecionado ? barbeiroSelecionado.nome : '',
         servico: servicoSelecionado ? servicoSelecionado.tipo : '',
-        local: local,
+        local: "Dr. Rua José De Pata, 471", // Atualizando o local para o nome correto
         data: dayjs(date).format('YYYY-MM-DD'),
         horario: hora,  
         nomeCliente: nomeCliente,
@@ -123,7 +124,7 @@ export default function Agendamento({ navigation }) {
   
       Alert.alert(
         'Agendamento Confirmado!',
-        `Barbeiro: ${barbeiroSelecionado.nome}\nServiço: ${servicoSelecionado.tipo}\nLocal: ${local}`,
+        `Barbeiro: ${barbeiroSelecionado.nome}\nServiço: ${servicoSelecionado.tipo}\nLocal: Dr. Rua José De Pata, 471`, // Atualizando a mensagem de confirmação
         [{ text: 'OK', onPress: () => console.log('OK Pressed') }]
       );
   
@@ -173,23 +174,27 @@ export default function Agendamento({ navigation }) {
     }
   };
 
-  const fetchAvailableTimeSlots = useCallback(async () => {
-    const barbeiroSelecionado = barbeiros.find(b => b.id === barbeiro);
-   if (barbeiroSelecionado && data) {
-      const allTimeSlots = IntervalodeTempo(); // Get all available time slots
-      const availableTimeSlots = [];
-      for (const intervalo of allTimeSlots) {
-        const isAvailable = await checkDisponibilidade(data, intervalo, barbeiroSelecionado.nome);
-        if (isAvailable) {
-          availableTimeSlots.push(intervalo);
+  const fetchAvailableTimeSlots = useCallback(
+    debounce(async () => {
+      const barbeiroSelecionado = barbeiros.find(b => b.id === barbeiro);
+      if (barbeiroSelecionado && data) {
+        const allTimeSlots = IntervalodeTempo(); // Get all available time slots
+        const availableTimeSlots = [];
+        for (const intervalo of allTimeSlots) {
+          const isAvailable = await checkDisponibilidade(data, intervalo, barbeiroSelecionado.nome);
+          if (isAvailable) {
+            availableTimeSlots.push(intervalo);
+          }
         }
+        setIntervaloTempo(availableTimeSlots); // Update with only available slots
+      } else {
+        setIntervaloTempo([]); // Clear if no barber or date selected
       }
-      setIntervaloTempo(availableTimeSlots); // Update with only available slots
-    } else {
-      setIntervaloTempo([]); // Clear if no barber or date selected
-    }
-  }, [barbeiro, data]);
+    }, 500), // Debounce para 500ms
+    [barbeiro, data]
+  );
 
+  const barbeiroSelecionado = useMemo(() => barbeiros.find(b => b.id === barbeiro), [barbeiros, barbeiro]);
 
   useEffect(() => {
     fetchAvailableTimeSlots();
@@ -273,7 +278,7 @@ export default function Agendamento({ navigation }) {
         </View>
 
         <View style={styles.contentContainer}>
-          <View style={styles.formContainer}>
+        <View style={styles.formContainer}>
             <Text style={styles.label}>Escolha o barbeiro:</Text>
             <Picker
               selectedValue={barbeiro}
@@ -302,9 +307,7 @@ export default function Agendamento({ navigation }) {
               style={styles.picker}
               onValueChange={(itemValue) => setLocal(itemValue)}
             >
-              <Picker.Item label="Local 1" value="local1" />
-              <Picker.Item label="Local 2" value="local2" />
-              <Picker.Item label="Local 3" value="local3" />
+              <Picker.Item label="Dr. Rua José De Pata, 471" value="local1" />
             </Picker>
 
             <TouchableOpacity style={styles.dateButton} onPress={showDatepicker}>
