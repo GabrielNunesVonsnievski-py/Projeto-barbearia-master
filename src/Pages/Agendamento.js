@@ -115,7 +115,7 @@ export default function Agendamento({ navigation }) {
       await addDoc(agendamentoCollection, {
         barbeiro: barbeiroSelecionado ? barbeiroSelecionado.nome : '',
         servico: servicoSelecionado ? servicoSelecionado.tipo : '',
-        local: local,
+        local: "Dr. Rua José De Pata, 471", // Atualizando o local para o nome correto
         data: dayjs(date).format('YYYY-MM-DD'),
         horario: hora,  
         nomeCliente: nomeCliente,
@@ -124,7 +124,7 @@ export default function Agendamento({ navigation }) {
   
       Alert.alert(
         'Agendamento Confirmado!',
-        `Barbeiro: ${barbeiroSelecionado.nome}\nServiço: ${servicoSelecionado.tipo}\nLocal: ${local}`,
+        `Barbeiro: ${barbeiroSelecionado.nome}\nServiço: ${servicoSelecionado.tipo}\nLocal: Dr. Rua José De Pata, 471`, // Atualizando a mensagem de confirmação
         [{ text: 'OK', onPress: () => console.log('OK Pressed') }]
       );
   
@@ -249,7 +249,7 @@ export default function Agendamento({ navigation }) {
         </View>
 
         <View style={styles.contentContainer}>
-          <View style={styles.formContainer}>
+        <View style={styles.formContainer}>
             <Text style={styles.label}>Escolha o barbeiro:</Text>
             <Picker
               selectedValue={barbeiro}
@@ -278,9 +278,7 @@ export default function Agendamento({ navigation }) {
               style={styles.picker}
               onValueChange={(itemValue) => setLocal(itemValue)}
             >
-              <Picker.Item label="Local 1" value="local1" />
-              <Picker.Item label="Local 2" value="local2" />
-              <Picker.Item label="Local 3" value="local3" />
+              <Picker.Item label="Dr. Rua José De Pata, 471" value="local1" />
             </Picker>
 
             <TouchableOpacity style={styles.dateButton} onPress={showDatepicker}>
