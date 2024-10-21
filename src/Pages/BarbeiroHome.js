@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, Text, ScrollView, Alert } from 'react-native';
+import { View, Image, TouchableOpacity, StyleSheet, Text, ScrollView, Alert} from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
+import dayjs from 'dayjs';
 import { auth, database, getDocs, deleteDoc, updateDoc, doc } from '../Config/firebaseconfig';
 import Loading from './Loading';
 import { collection, query, where, getDoc, setDoc } from 'firebase/firestore';
@@ -131,11 +132,23 @@ export default function BarbeiroHome({ navigation }) {
     }
   };
 
-  const handleConfirmacao = async (idAgendamento, servico, veio) => {
+  const handleConfirmacao = async (idAgendamento, servico, veio, data, hora) => {
+    const dataAgendamento = dayjs(`${data} ${hora}`, 'YYYY-MM-DD HH:mm');
+    const agora = dayjs();
+  
+    // Verifica se o agendamento já passou
+    if (agora.isBefore(dataAgendamento)) {
+      Alert.alert(
+        'Horário Expirado',
+        'O horário do agendamento ainda não passou. Não é possível confirmar.'
+      );
+      return;
+    }
+  
     const mensagem = veio
       ? 'Você confirma que o cliente veio?'
       : 'Você confirma que o cliente não veio?';
-
+  
     Alert.alert(
       'Confirmação',
       mensagem,
@@ -150,13 +163,16 @@ export default function BarbeiroHome({ navigation }) {
             if (veio) {
               const valorServico = await getServicoValor(servico); // Obter valor do serviço
               await acumularFaturamentoDiario(valorServico, barbeiroLogado); // Acumular valor no faturamento diário
+            } else {
+              await excluirAgendamento(idAgendamento); // Excluir agendamento
             }
-            excluirAgendamento(idAgendamento); // Excluir agendamento
+            getAgendamentos(); // Atualizar a lista de agendamentos após a ação
           },
         },
       ],
     );
   };
+  
 
   if (isLoading) {
     return <Loading />;
@@ -186,15 +202,15 @@ export default function BarbeiroHome({ navigation }) {
                 <Text style={styles.agendamentoText}>Cliente: {agendamento.nomeCliente}</Text>
                 
                 <View style={styles.buttonContainer}>
-                  <TouchableOpacity
+                <TouchableOpacity
                     style={styles.buttonConfirm}
-                    onPress={() => handleConfirmacao(agendamento.id, agendamento.servico, true)}
+                    onPress={() => handleConfirmacao(agendamento.id, agendamento.servico, true, agendamento.data, agendamento.horario)}
                   >
                     <Text style={styles.buttonText}>Cliente veio</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.buttonCancel}
-                    onPress={() => handleConfirmacao(agendamento.id, agendamento.servico, false)}
+                    onPress={() => handleConfirmacao(agendamento.id, agendamento.servico, false, agendamento.data, agendamento.horario)}
                   >
                     <Text style={styles.buttonText}>Cliente não veio</Text>
                   </TouchableOpacity>

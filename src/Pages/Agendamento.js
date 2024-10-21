@@ -164,7 +164,7 @@ export default function Agendamento({ navigation }) {
     if (showDate) {
       setDate(currentDate);
       setShowDate(Platform.OS === 'ios');
-      setData(dayjs(currentDate).format('YYYY-MM-DD')); 
+      set`Data`(dayjs(currentDate).format('YYYY-MM-DD')); 
       setTime(new Date(currentDate));
     } else if (showTime) {
       setTime(currentDate);
@@ -237,16 +237,16 @@ export default function Agendamento({ navigation }) {
           // Se a data selecionada for o dia atual
           const horarioAtual = dayjs();
           const horariosFiltrados = IntervalodeTempo().filter(horario => {
-            return dayjs(horario, 'HH:mm').isAfter(horarioAtual); // Filtra horários após o atual
+            return dayjs(horario, 'HH:mm').isAfter(horarioAtual); // filtra horários após o atual
           });
-          setIntervaloTempo(horariosFiltrados); // Atualiza com os horários filtrados
+          setIntervaloTempo(horariosFiltrados); // atualiza com os horários filtrados
         } else {
-          setIntervaloTempo(IntervalodeTempo()); // Para outros dias, mostra todos os horários
+          setIntervaloTempo(IntervalodeTempo()); // para outros dias (quando mudar) mostra todos os horários
         }
       };
     
-      updateHorariosDisponiveis(); // Atualiza os horários quando a data mudar
-    }, [date]);  // Dependência no `useEffect` que executa ao alterar o `date`
+      updateHorariosDisponiveis(); // atualiza os horários quando a data mudar
+    }, [date]);
     
     
   const showDatepicker = () => {
@@ -318,9 +318,10 @@ export default function Agendamento({ navigation }) {
                 style={styles.DateTimePickerData}
                 testID="dateTimePicker"
                 value={date}
+
                 mode={'date'}
                 is24Hour={true}
-                minimumDate={new Date()}  // Define a data mínima como o dia atual
+                minimumDate={new Date()}  //Define a data mínima (para ser possível agendar) como o dia atual
                 onChange={onChange}
               />
             )}
