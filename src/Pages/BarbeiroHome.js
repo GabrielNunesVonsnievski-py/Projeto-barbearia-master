@@ -135,12 +135,12 @@ export default function BarbeiroHome({ navigation }) {
   const handleConfirmacao = async (idAgendamento, servico, veio, data, hora) => {
     const dataAgendamento = dayjs(`${data} ${hora}`, 'YYYY-MM-DD HH:mm');
     const agora = dayjs();
-  
+    
     // Verifica se o agendamento já passou
     if (agora.isBefore(dataAgendamento)) {
       Alert.alert(
         'Horário Expirado',
-        'O horário do agendamento ainda não passou. Não é possível confirmar.'
+        'O horário do agendamento ainda não passou. Não é possível manipular o status do agendamento.'
       );
       return;
     }
@@ -161,16 +161,23 @@ export default function BarbeiroHome({ navigation }) {
           text: 'Confirmar',
           onPress: async () => {
             if (veio) {
-              const valorServico = await getServicoValor(servico); // Obter valor do serviço
-              await acumularFaturamentoDiario(valorServico, barbeiroLogado); // Acumular valor no faturamento diário
+              const valorServico = await getServicoValor(servico);
+              await acumularFaturamentoDiario(valorServico, barbeiroLogado);
             } else {
-              await excluirAgendamento(idAgendamento); // Excluir agendamento
+              await excluirAgendamento(idAgendamento);
             }
-            getAgendamentos(); // Atualizar a lista de agendamentos após a ação
+            getAgendamentos();
           },
         },
       ],
     );
+  };
+  
+  // Verifica se o agendamento já passou para desabilitar o botão
+  const isAgendamentoPassado = (data, hora) => {
+    const dataAgendamento = dayjs(`${data} ${hora}`, 'YYYY-MM-DD HH:mm');
+    const agora = dayjs();
+    return agora.isAfter(dataAgendamento);
   };
   
 
@@ -191,36 +198,47 @@ export default function BarbeiroHome({ navigation }) {
 
       {/* Conteúdo Principal */}
       <View style={styles.container}>
-        <View style={styles.content}>
-          {/* Lista de Agendamentos */}
-          {agendamentos.length > 0 ? (
-            agendamentos.map((agendamento) => (
-              <View key={agendamento.id} style={styles.agendamentoContainer}>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        {agendamentos.length > 0 ? (
+          agendamentos.map((agendamento) => {
+            const agendamentoPassado = isAgendamentoPassado(agendamento.data, agendamento.horario);
+            return (
+              <View key={agendamento.id} style={[styles.agendamentoContainer, agendamentoPassado ? {} : styles.containerDisabled]}>
                 <Text style={styles.agendamentoText}>Data: {agendamento.data}</Text>
                 <Text style={styles.agendamentoText}>Horário: {agendamento.horario}</Text>
                 <Text style={styles.agendamentoText}>Serviço: {agendamento.servico}</Text>
                 <Text style={styles.agendamentoText}>Cliente: {agendamento.nomeCliente}</Text>
                 
                 <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                    style={styles.buttonConfirm}
+                  <TouchableOpacity
+                    style={[
+                      styles.buttonConfirm,
+                      agendamentoPassado ? {} : styles.buttonDisabled
+                    ]}
                     onPress={() => handleConfirmacao(agendamento.id, agendamento.servico, true, agendamento.data, agendamento.horario)}
+                    disabled={!agendamentoPassado}
                   >
                     <Text style={styles.buttonText}>Cliente veio</Text>
                   </TouchableOpacity>
+
                   <TouchableOpacity
-                    style={styles.buttonCancel}
+                    style={[
+                      styles.buttonCancel,
+                      agendamentoPassado ? {} : styles.buttonDisabled
+                    ]}
                     onPress={() => handleConfirmacao(agendamento.id, agendamento.servico, false, agendamento.data, agendamento.horario)}
+                    disabled={!agendamentoPassado}
                   >
                     <Text style={styles.buttonText}>Cliente não veio</Text>
                   </TouchableOpacity>
                 </View>
               </View>
-            ))
-          ) : (
-            <Text style={styles.noAgendamentoText}>Nenhum agendamento encontrado</Text>
-          )}
-        </View>
+            );
+          })
+        ) : (
+          <Text style={styles.noAgendamentoText}>Nenhum agendamento encontrado</Text>
+        )}
+      </ScrollView>
 
         {/* Footer */}
         <View style={styles.footer}>
@@ -243,6 +261,12 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  buttonDisabled: {
+    backgroundColor: '#ff1313',
+  },
+  containerDisabled: {
+    backgroundColor: 'gray',
   },
   container: {
     flex: 1,
