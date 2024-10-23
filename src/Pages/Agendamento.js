@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, TextInput, Platform, } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, TextInput, Platform} from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
@@ -165,7 +165,7 @@ export default function Agendamento({ navigation }) {
     if (showDate) {
       setDate(currentDate);
       setShowDate(Platform.OS === 'ios');
-      set`Data`(dayjs(currentDate).format('YYYY-MM-DD')); 
+      setData(dayjs(currentDate).format('YYYY-MM-DD')); 
       setTime(new Date(currentDate));
     } else if (showTime) {
       setTime(currentDate);
