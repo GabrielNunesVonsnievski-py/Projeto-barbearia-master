@@ -125,6 +125,7 @@ export default function Details({ navigation, route }) {
                             value={dataEdit}
                             mode={'date'}
                             is24Hour={true}
+                            minimumDate={new Date()}
                             display="spinner"
                             onChange={handleDateChange}
                         />
