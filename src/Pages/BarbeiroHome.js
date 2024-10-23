@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonDisabled: {
-    backgroundColor: '#ff1313',
+    backgroundColor: '#ef4444',
   },
   containerDisabled: {
     backgroundColor: 'gray',
@@ -275,12 +275,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   agendamentoContainer: {
-    marginBottom: 10,
+    marginBottom: 5,
     padding: 10,
     borderWidth: 1,
     borderColor: '#b69045',
     borderRadius: 10,
     backgroundColor: '#fff',
+    width: 300,
+    marginTop: 20,
   },
   agendamentoText: {
     color: '#000',
@@ -297,12 +299,12 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   buttonConfirm: {
-    backgroundColor: 'green',
+    backgroundColor: '#84cc16',
     padding: 10,
     borderRadius: 5,
   },
   buttonCancel: {
-    backgroundColor: 'red',
+    backgroundColor: '#ef4444',
     padding: 10,
     borderRadius: 5,
   },

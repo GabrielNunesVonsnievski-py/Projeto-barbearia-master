@@ -57,7 +57,7 @@ export default function Horario({ navigation }) {
 
     return (
         <SafeAreaView style={styles.container}>
-            <FlatList
+            <FlatList tyle={styles.flat}
                 showsVerticalScrollIndicator={false}
                 data={horario}
                 renderItem={({ item }) => {
@@ -101,11 +101,15 @@ const styles = StyleSheet.create({
         backgroundColor: '#e8e8e8',
         paddingTop: 20,
     },
+    flat: {
+        margin: 10,
+        borderEndEndRadius: 30,
+    },
     taskContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginVertical: 8,
+        marginVertical: 12,
         marginHorizontal: 16,
         padding: 10,
         backgroundColor: '#fff',
@@ -154,6 +158,7 @@ const styles = StyleSheet.create({
         bottom: 30,
         right: 20,
         borderRadius: 25,
+        marginTop: 10,
     },
     txtbtnLogout: {
         color: '#FFF',
