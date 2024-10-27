@@ -5,12 +5,11 @@ import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker'; // Import DateTimePicker
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, database } from '../Config/firebaseconfig'; 
-import dayjs from 'dayjs';
 
 export default function ManagerHome({ navigation }) {
   const [isLoading, setIsLoading] = useState(true);
   const [agendamentos, setAgendamentos] = useState([]);
-  const [barbeiroLogado, setBarbeiroLogado] = useState(null); 
+  const [barbeiroLogado, setBarbeiroLogado] = useState(null);
   const [barbeiros, setBarbeiros] = useState([]);
   const [SelectedBarbeiro, setSelectedBarbeiro] = useState(null);
   const [faturamentoBarbeiros, setFaturamentoBarbeiros] = useState([]);
@@ -51,69 +50,18 @@ export default function ManagerHome({ navigation }) {
   // Função para buscar o faturamento diário dos barbeiros com base na data selecionada
   const getFaturamentoBarbeiros = async (date = selectedDate) => {
     try {
-      const faturamentoRef = collection(database, "faturamento_diario"); // Certifique-se de definir o faturamentoRef corretamente
-      const formattedDate = dayjs(date).format("YYYY-MM-DD"); // Formate a data
-      const faturamentoSnap = await getDocs(query(faturamentoRef, where("data", "==", formattedDate)));
+      const faturamentoRef = collection(database, "faturamento_diario");
+      const faturamentoSnap = await getDocs(faturamentoRef);
       const faturamentoList = faturamentoSnap.docs.map((doc) => ({
         ...doc.data(),
         id: doc.id,
       }));
       setFaturamentoBarbeiros(faturamentoList);
+      console.log(faturamentoList);
     } catch (error) {
       console.error("Erro ao buscar o faturamento diário dos barbeiros: ", error);
     }
   };
-
-   //adicionar ou atualizar o faturamento do barbeiro para o dia atual
-   const updateFaturamentoBarbeiro = async (barbeiroId, valor) => {
-    try {
-      const hoje = dayjs().format("YYYY-MM-DD");
-      const faturamentoSnap = await getDocs(query(faturamentoRef, where("barbeiroId", "==", barbeiroId), where("data", "==", hoje)));
-      
-      if (faturamentoSnap.empty) {
-        //se não existir faturamento para o dia, cria um novo documento
-        await addDoc(faturamentoRef, {
-          barbeiroId,
-          data: hoje,
-          faturamento: valor,
-        });
-      } else {
-        //atualiza o faturamento q ja existe
-        const faturamentoDoc = faturamentoSnap.docs[0];
-        await updateDoc(doc(faturamentoRef, faturamentoDoc.id), {
-          faturamento: faturamentoDoc.data().faturamento + valor,
-        });
-      }
-    } catch (error) {
-      console.error("Erro ao atualizar faturamento: ", error);
-    }
-  };
-
-  //reseta o faturamento no final do dia
-  const resetFaturamentoDiario = async () => {
-    try {
-      const hoje = dayjs().format("YYYY-MM-DD");
-      const faturamentoSnap = await getDocs(query(faturamentoRef, where("data", "==", hoje)));
-
-      faturamentoSnap.forEach(async (doc) => {
-        await updateDoc(doc.ref, { faturamento: 0 }); //reseta o faturamento
-      });
-    } catch (error) {
-      console.error("Erro ao resetar faturamento: ", error);
-    }
-  };
-
-  useEffect(() => {
-    const now = dayjs();
-    const endOfDay = now.endOf('day'); // Obter o final do dia atual
-
-    //agenda o 'reset' do faturamento no final do dia
-    const timeout = setTimeout(() => {
-      resetFaturamentoDiario();
-    }, endOfDay.diff(now));
-
-    return () => clearTimeout(timeout); //limpa o timeout ao desmontar o componente
-  }, []);
 
   const getBarbeiros = async () => {
     try {
@@ -138,6 +86,13 @@ export default function ManagerHome({ navigation }) {
         ...doc.data(),
         id: doc.id
       }));
+      
+      agendamentoList.sort((a, b) => {
+        const dataA = dayjs(`${a.data} ${a.horario}`, 'YYYY-MM-DD HH:mm');
+        const dataB = dayjs(`${b.data} ${b.horario}`, 'YYYY-MM-DD HH:mm');
+        return dataA - dataB;
+      });
+
       setAgendamentos(agendamentoList);
       console.log(agendamentoList);
     };
@@ -150,7 +105,6 @@ export default function ManagerHome({ navigation }) {
     const currentDate = selectedDate || new Date();
     setShowDatePicker(Platform.OS === 'ios');
     setSelectedDate(currentDate); // Atualiza a data selecionada
-    console.log("Nova data selecionada:", dayjs(currentDate).format("YYYY-MM-DD"));
     getFaturamentoBarbeiros(currentDate); // Atualiza o faturamento com base na data escolhida
   };
 
@@ -179,12 +133,12 @@ export default function ManagerHome({ navigation }) {
             ))}
           </Picker>
 
-              {/* DateTimePicker para selecionar data */}
+          {/* DateTimePicker */}
           <View style={styles.dateTimePickerContainer}>
             <Text style={styles.datePickerLabel}>Selecione a data:</Text>
             <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.datePickerButton}>
               <Text style={styles.datePickerButtonText}>
-                {dayjs(selectedDate).format("DD/MM/YYYY")}
+                {selectedDate.toLocaleDateString()}
               </Text>
             </TouchableOpacity>
             {showDatePicker && (
@@ -197,22 +151,22 @@ export default function ManagerHome({ navigation }) {
             )}
           </View>
 
-          {/*faturamento diário dos barbeiros */}
+          {/* Exibe o faturamento diário dos barbeiros */}
           <View style={styles.faturamentoContainer}>
             <Text style={styles.faturamentoTitle}>Faturamento Diário dos Barbeiros</Text>
             {faturamentoBarbeiros.map((barbeiro) => (
               <View key={barbeiro.id} style={styles.faturamentoItem}>
-                {barbeiros.find((b) => b.id === barbeiro.barbeiroId) && (
+                {barbeiros.find((b) => b.id === barbeiro.id) && (
                   <Text style={styles.faturamentoText}>
-                    {barbeiros.find((b) => b.id === barbeiro.barbeiroId).nome}
-                    - R$ {barbeiro.faturamento || 0} em {dayjs(selectedDate).format("DD/MM/YYYY")}
+                    {barbeiros.find((b) => b.id === barbeiro.id).nome} 
+                    - R$ {barbeiro.faturamento || 0} em {selectedDate.toLocaleDateString()}
                   </Text>
                 )}
               </View>
             ))}
           </View>
 
-          {/* Agendamentos */}
+          {/* Lista de Agendamentos */}
           <View style={styles.agendamentosContainer}>
             <Text style={styles.agendamentosTitle}>Agendamentos</Text>
             {agendamentos.length > 0 ? (

@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, Tex
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
-import { database, auth, collection, addDoc, query, where, getDocs, updateDoc, fetchAvailableTimeSlots } from "../Config/firebaseconfig";
+import { database, auth, collection, addDoc, query, where, getDocs, updateDoc, fetchAvailableTimeSlots, Timestamp } from "../Config/firebaseconfig";
 import Loading from './Loading';
 import debounce from 'lodash.debounce';
 
@@ -113,10 +113,11 @@ export default function Agendamento({ navigation }) {
   
       const agendamentoCollection = collection(database, "agendamento");
       await addDoc(agendamentoCollection, {
-        barbeiro: barbeiroSelecionado ? barbeiroSelecionado.nome : '',
+        barbeiro: barbeiroSelecionado ? barbeiroSelecionado.nome : '',  
         servico: servicoSelecionado ? servicoSelecionado.tipo : '',
-        local: "Dr. Rua José De Pata, 471", // Atualizando o local para o nome correto
-        data: dayjs(date).format('YYYY-MM-DD'),
+        local: "Dr. Rua José De Pata, 471", 
+        
+        data: Timestamp.fromDate(new Date(dayjs(date))),
         horario: hora,  
         nomeCliente: nomeCliente,
         idUser: user.uid,
@@ -178,7 +179,7 @@ export default function Agendamento({ navigation }) {
     debounce(async () => {
       const barbeiroSelecionado = barbeiros.find(b => b.id === barbeiro);
       if (barbeiroSelecionado && data) {
-        const allTimeSlots = IntervalodeTempo(); // Get all available time slots
+        const allTimeSlots = IntervalodeTempo(); 
         const availableTimeSlots = [];
         for (const intervalo of allTimeSlots) {
           const isAvailable = await checkDisponibilidade(data, intervalo, barbeiroSelecionado.nome);
@@ -186,11 +187,11 @@ export default function Agendamento({ navigation }) {
             availableTimeSlots.push(intervalo);
           }
         }
-        setIntervaloTempo(availableTimeSlots); // Update with only available slots
+        setIntervaloTempo(availableTimeSlots); 
       } else {
         setIntervaloTempo([]); // Clear if no barber or date selected
       }
-    }, 500), // Debounce para 500ms
+    }, 500), 
     [barbeiro, data]
   );
 

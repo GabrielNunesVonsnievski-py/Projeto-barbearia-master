@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { SafeAreaView, Text, View, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, orderBy, Timestamp } from 'firebase/firestore';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { signOut } from "firebase/auth";
 import { database, auth, doc, deleteDoc } from "../Config/firebaseconfig";
@@ -25,12 +25,23 @@ export default function Horario({ navigation }) {
         }
 
         const agendamentoCollection = collection(database, "agendamento");
-        const q = query(agendamentoCollection, where("idUser", "==", user.uid));
+
+        const q = query(
+            agendamentoCollection, 
+            where("idUser", "==", user.uid,
+            //orderBy("data", "asc") //ordena os horarios do menor p maior (asc = ascendente, do menor pro maior)
+        ));
+
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const list = [];
             querySnapshot.forEach((doc) => {
                 list.push({ ...doc.data(), id: doc.id });
             });
+
+            const sortedList = list.sort((a, b) => {  // organiza os horarios em ordem crescente 
+                return new Date(a.data) - new Date(b.data);
+            });
+
             setHorario(list);
         });
 

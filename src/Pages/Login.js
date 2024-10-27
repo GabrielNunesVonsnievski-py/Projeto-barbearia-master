@@ -3,12 +3,12 @@ import { View, Image, TextInput, TouchableOpacity, StyleSheet, Text, Alert, Keyb
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { auth } from '../Config/firebaseconfig';
-import { FontAwesome5 } from '@expo/vector-icons'; // Para ícone do olho
+import { FontAwesome5 } from '@expo/vector-icons'; 
 
 export default function Login({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // Estado para controlar visibilidade da senha
+  const [showPassword, setShowPassword] = useState(false); 
 
   const LoginUser = async () => {
     try {
@@ -67,7 +67,7 @@ export default function Login({ navigation }) {
           </View>
 
           {/* Formulário */}
-          <View style={styles.formContainer}>
+          <KeyboardAvoidingView style={styles.formContainer} behavior="position" enabled>
             <Text style={styles.title}>Login</Text>
             <TextInput
               style={styles.input}
@@ -80,7 +80,7 @@ export default function Login({ navigation }) {
             />
             
             {/* Campo de Senha com Botão de Mostrar/Ocultar Senha */}
-            <View style={styles.passwordContainer}>
+            <KeyboardAvoidingView style={styles.passwordContainer}>
               <TextInput
                 style={styles.inputPassword}
                 placeholder="Senha"
@@ -92,7 +92,7 @@ export default function Login({ navigation }) {
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 <FontAwesome5 name={showPassword ? 'eye-slash' : 'eye'} size={20} color="rgba(182, 144, 69, 0.8)" />
               </TouchableOpacity>
-            </View>
+            </KeyboardAvoidingView>
 
             <TouchableOpacity style={styles.btnLogin} onPress={LoginUser}>
               <Text style={styles.txtbtnLogin}>LOGIN</Text>
@@ -102,7 +102,7 @@ export default function Login({ navigation }) {
               onPress={() => navigation.navigate('Cadastrar')}>
               Não possui uma conta? Criar
             </Text>
-          </View>
+          </KeyboardAvoidingView>
         </ScrollView>
       </KeyboardAvoidingView>
       <View style={styles.footer}>

@@ -69,6 +69,13 @@ export default function BarbeiroHome({ navigation }) {
           ...doc.data(),
           id: doc.id,
         }));
+
+        agendamentoList.sort((a, b) => {
+          const dataA = dayjs(`${a.data} ${a.horario}`, 'YYYY-MM-DD HH:mm');
+          const dataB = dayjs(`${b.data} ${b.horario}`, 'YYYY-MM-DD HH:mm');
+          return dataA - dataB;
+        });
+  
         setAgendamentos(agendamentoList);
         console.log(agendamentoList);
       } else {

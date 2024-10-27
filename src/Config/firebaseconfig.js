@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, doc, deleteDoc, addDoc, updateDoc, query, where, getDocs } from "firebase/firestore"; // Import `where` e `query` e `getDocs` do Firestore
+import { getFirestore, collection, doc, deleteDoc, addDoc, updateDoc, query, where, getDocs, Timestamp } from "firebase/firestore"; // Import `where` e `query` e `getDocs` do Firestore
 import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 
 // Your web app's Firebase configuration
