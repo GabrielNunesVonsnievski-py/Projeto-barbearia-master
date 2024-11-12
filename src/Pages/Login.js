@@ -53,7 +53,7 @@ export default function Login({ navigation }) {
   return (
     <View style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" || Platform.OS === "windows" ? "padding" : "height" }
         style={styles.innerContainer}
       >
         <ScrollView contentContainerStyle={styles.scrollViewContent}>

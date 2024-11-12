@@ -5,16 +5,18 @@ import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker'; // Import DateTimePicker
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, database } from '../Config/firebaseconfig'; 
+import dayjs from 'dayjs';
+
 
 export default function ManagerHome({ navigation }) {
   const [isLoading, setIsLoading] = useState(true);
   const [agendamentos, setAgendamentos] = useState([]);
-  const [barbeiroLogado, setBarbeiroLogado] = useState(null);
+  const [barbeiroLogado, setBarbeiroLogado] = useState(null); 
   const [barbeiros, setBarbeiros] = useState([]);
   const [SelectedBarbeiro, setSelectedBarbeiro] = useState(null);
   const [faturamentoBarbeiros, setFaturamentoBarbeiros] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date()); // Estado para armazenar a data selecionada
-  const [showDatePicker, setShowDatePicker] = useState(false); // Estado para exibir ou ocultar o DateTimePicker
+  const [selectedDate, setSelectedDate] = useState(new Date()); 
+  const [showDatePicker, setShowDatePicker] = useState(false); 
 
   const useBarbeirosRef = query(
     collection(database, "cliente"),
@@ -42,9 +44,10 @@ export default function ManagerHome({ navigation }) {
       }
     };
 
+    // Chama a função ao carregar a pg
     fetchCurrentUser();
     getBarbeiros();
-    getFaturamentoBarbeiros(); // Chama a função ao carregar a página
+    getFaturamentoBarbeiros(); 
   }, []);
 
   // Função para buscar o faturamento diário dos barbeiros com base na data selecionada
@@ -60,6 +63,21 @@ export default function ManagerHome({ navigation }) {
       console.log(faturamentoList);
     } catch (error) {
       console.error("Erro ao buscar o faturamento diário dos barbeiros: ", error);
+    }
+  };
+
+  const encerrarExpediente = async () => {
+    try {
+      const hoje = dayjs().format('YYYY-MM-DD');
+      for (const barbeiro of faturamentoBarbeiros) {
+        const faturamentoRef = doc(database, "faturamento_diario", barbeiro.id);
+        await setDoc(faturamentoRef, { data: hoje, faturamento: 0 }, { merge: true });
+      }
+  
+      console.log("Faturamento zerado para todos os barbeiros.");
+      setFaturamentoBarbeiros(faturamentoBarbeiros.map(b => ({ ...b, faturamento: 0 }))); // Atualiza o estado para zero
+    } catch (error) {
+      console.error("Erro ao zerar o faturamento diário:", error);
     }
   };
 
@@ -165,6 +183,11 @@ export default function ManagerHome({ navigation }) {
               </View>
             ))}
           </View>
+
+          <TouchableOpacity onPress={encerrarExpediente} style={styles.button}>
+            <Text style={styles.buttonText}>Encerrar expediente</Text>
+          </TouchableOpacity>
+
 
           {/* Lista de Agendamentos */}
           <View style={styles.agendamentosContainer}>

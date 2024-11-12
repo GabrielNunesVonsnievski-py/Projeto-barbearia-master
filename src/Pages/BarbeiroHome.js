@@ -98,7 +98,8 @@ export default function BarbeiroHome({ navigation }) {
       const servicoSnap = await getDocs(servicoRef);
       if (!servicoSnap.empty) {
         const servicoData = servicoSnap.docs[0].data();
-        return servicoData.valor; // Retorna o valor do serviço
+        console.log('Valor do serviço encontrado:', servicoData.valor);
+        return servicoData.valor;  
       } else {
         console.error('Serviço não encontrado');
         return 0;
@@ -108,26 +109,29 @@ export default function BarbeiroHome({ navigation }) {
       return 0;
     }
   };
+  
 
   // Função para acumular o valor no faturamento diário do barbeiro
   const acumularFaturamentoDiario = async (valor, barbeiroId) => {
     try {
-      const barbeiroDocRef = doc(database, "faturamento_diario", barbeiroId); 
+      // const hoje = dayjs().format('YYYY-MM-DD');
+      const barbeiroDocRef = doc(database, "faturamento_diario", barbeiroId); //`${barbeiroId}_${hoje}`);
       const barbeiroDocSnap = await getDoc(barbeiroDocRef);
   
       if (barbeiroDocSnap.exists()) {
         const barbeiroData = barbeiroDocSnap.data();
-        const novoFaturamento = (barbeiroData.faturamento || 0) + valor; 
+        const novoFaturamento = (barbeiroData.faturamento || 0) + valor;
         await updateDoc(barbeiroDocRef, { faturamento: novoFaturamento });
         console.log('Faturamento diário atualizado:', novoFaturamento);
       } else {
-        await setDoc(barbeiroDocRef, { faturamento: valor });
+        await setDoc(barbeiroDocRef, { faturamento: valor, data: hoje });
         console.log('Novo faturamento diário criado:', valor);
       }
     } catch (error) {
       console.error('Erro ao atualizar o faturamento diário do barbeiro:', error);
     }
   };
+  
 
   const excluirAgendamento = async (idAgendamento) => {
     try {
@@ -142,7 +146,7 @@ export default function BarbeiroHome({ navigation }) {
   const handleConfirmacao = async (idAgendamento, servico, veio, data, hora) => {
     const dataAgendamento = dayjs(`${data} ${hora}`, 'YYYY-MM-DD HH:mm');
     const agora = dayjs();
-    
+  
     // Verifica se o agendamento já passou
     if (agora.isBefore(dataAgendamento)) {
       Alert.alert(
@@ -170,17 +174,17 @@ export default function BarbeiroHome({ navigation }) {
             if (veio) {
               const valorServico = await getServicoValor(servico);
               await acumularFaturamentoDiario(valorServico, barbeiroLogado);
-            } else {
-              await excluirAgendamento(idAgendamento);
             }
-            getAgendamentos();
+            await excluirAgendamento(idAgendamento);
+            await getAgendamentos(); 
           },
         },
       ],
     );
   };
   
-  // Verifica se o agendamento já passou para desabilitar o botão
+  
+
   const isAgendamentoPassado = (data, hora) => {
     const dataAgendamento = dayjs(`${data} ${hora}`, 'YYYY-MM-DD HH:mm');
     const agora = dayjs();

@@ -3,7 +3,8 @@ import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, Alert, Tex
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
-import { database, auth, collection, addDoc, query, where, getDocs, updateDoc, fetchAvailableTimeSlots, Timestamp } from "../Config/firebaseconfig";
+import { database, auth, collection, addDoc, query, where, getDocs, updateDoc, fetchAvailableTimeSlots } from "../Config/firebaseconfig";
+import { Timestamp } from 'firebase/firestore';
 import Loading from './Loading';
 import debounce from 'lodash.debounce';
 
@@ -110,15 +111,18 @@ export default function Agendamento({ navigation }) {
       }
   
       const nomeCliente = await fetchUserName(user.email);
+
+      const dataAgendamento = dayjs(date).format('DD-MM-YYYY');
+      const horaAgendada = hora;
+      console.log('Data agendada:', dataAgendamento, 'Hora agendada: ', horaAgendada);
   
       const agendamentoCollection = collection(database, "agendamento");
       await addDoc(agendamentoCollection, {
         barbeiro: barbeiroSelecionado ? barbeiroSelecionado.nome : '',  
         servico: servicoSelecionado ? servicoSelecionado.tipo : '',
         local: "Dr. Rua José De Pata, 471", 
-        
-        data: Timestamp.fromDate(new Date(dayjs(date))),
-        horario: hora,  
+        data: dataAgendamento,  
+        horario: horaAgendada,  
         nomeCliente: nomeCliente,
         idUser: user.uid,
       });
@@ -298,7 +302,7 @@ export default function Agendamento({ navigation }) {
               onValueChange={(itemValue) => setServico(itemValue)}
             >
               {servicos.map((servico) => (
-                <Picker.Item key={servico.id} label={servico.tipo + '   R$:' + servico.valor} value={servico.id} />
+                <Picker.Item key={servico.id} label={servico.tipo + '   R$' + servico.valor} value={servico.id} />
               ))}
             </Picker>
 
