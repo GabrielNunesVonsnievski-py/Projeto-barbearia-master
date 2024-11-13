@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, Text, ScrollView } from 'react-native';
+import { View, Image, TouchableOpacity, StyleSheet, Text, ScrollView, Linking} from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import Loading from './Loading';
 
@@ -12,6 +12,14 @@ export default function Home({ navigation }) {
       setIsLoading(false);
     }, 2000); // 2 segundos de delay que o marcos não gosta
   }, []);
+
+  const openWhatsApp = (phoneNumber, message) => {
+    let url = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
+    
+    Linking.openURL(url).catch((err) => {
+      console.error("Não foi possível abrir o WhatsApp", err);
+    });
+  };
 
   if (isLoading) {
     return <Loading />;
@@ -44,7 +52,7 @@ export default function Home({ navigation }) {
           <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Horario')}>
             <Text style={styles.buttonText}>Ver agendamentos</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.button, styles.whatsappButton]} onPress={() => navigation.navigate('WhatsApp')}>
+          <TouchableOpacity style={[styles.button, styles.whatsappButton]} onPress={() => openWhatsApp('5548999332071', 'Olá!')}>
             <FontAwesome5 name="whatsapp" size={16} color="#FFF" style={styles.icon} />
             <Text style={styles.buttonText}>Abrir WhatsApp</Text>
           </TouchableOpacity>
@@ -147,9 +155,13 @@ const styles = StyleSheet.create({
   whatsappButton: {
     backgroundColor: '#25D366', 
     flexDirection: 'row',      
-    alignItems: 'center',       
+    alignItems: 'center',    
   },
-  icon: {
-    marginRight: 8,
+  buttonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    flex: 1,
+    textAlign: 'center',
   },
 });
