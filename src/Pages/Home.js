@@ -44,7 +44,8 @@ export default function Home({ navigation }) {
           <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Horario')}>
             <Text style={styles.buttonText}>Ver agendamentos</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('WhatsApp')}>
+          <TouchableOpacity style={[styles.button, styles.whatsappButton]} onPress={() => navigation.navigate('WhatsApp')}>
+            <FontAwesome5 name="whatsapp" size={16} color="#FFF" style={styles.icon} />
             <Text style={styles.buttonText}>Abrir WhatsApp</Text>
           </TouchableOpacity>
         </View>
@@ -141,5 +142,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 5,
+  },
+
+  whatsappButton: {
+    backgroundColor: '#25D366', 
+    flexDirection: 'row',      
+    alignItems: 'center',       
+  },
+  icon: {
+    marginRight: 8,
   },
 });
