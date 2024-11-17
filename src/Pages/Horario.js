@@ -68,36 +68,39 @@ export default function Horario({ navigation }) {
 
     return (
         <SafeAreaView style={styles.container}>
-            <FlatList tyle={styles.flat}
-                showsVerticalScrollIndicator={false}
-                data={horario}
-                renderItem={({ item }) => {
-                    return (
-                        <View style={styles.taskContainer}>
-                            <TouchableOpacity
-                                style={styles.btnDeleteTask}
-                                onPress={() => {
-                                    deleteHorario(item.id)
-                                }}>
-                                <AntDesign name="delete" size={24} color="#FF4C4C" />
-                            </TouchableOpacity>
-                            <Text
-                                style={styles.taskDescription}
-                                onPress={() => {
-                                    navigation.navigate("Details", {
-                                        id: item.id,
-                                        data: item.data,
-                                        horario: item.horario
-                                    })
-                                }}>
-                                {item.data + '       ' + item.horario}
-                            </Text>
-                        </View>
-                    )
-                }}
-            />
-            <TouchableOpacity style={styles.btnNewTask} onPress={() => navigation.navigate("Agendamento")}>
-                <Text style={styles.iconBtn}> + </Text>
+            <View style={styles.listContainer}>
+                <FlatList tyle={styles.flat}
+                    showsVerticalScrollIndicator={false}
+                    data={horario}
+                    renderItem={({ item }) => {
+                        return (
+                            <View style={styles.taskContainer}>
+                                <TouchableOpacity
+                                    style={styles.btnDeleteTask}
+                                    onPress={() => {
+                                        deleteHorario(item.id)
+                                    }}>
+                                    <AntDesign name="delete" size={24} color="#FF4C4C" />
+                                </TouchableOpacity>
+                                <Text
+                                    style={styles.taskDescription}
+                                    onPress={() => {
+                                        navigation.navigate("Details", {
+                                            id: item.id,
+                                            data: item.data,
+                                            horario: item.horario
+                                        })
+                                    }}>
+                                    {item.data + '                    ' + item.horario}
+                                </Text>
+                            </View>
+                        )
+                    }}
+                />
+            </View>
+
+            <TouchableOpacity style={styles.btnNewTask} onPress={() => navigation.navigate("Home")}>
+                <Text style={styles.iconBtn}> Voltar </Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.btnLogout} onPress={logout}>
                 <Text style={styles.txtbtnLogout}>Logout</Text>
@@ -111,6 +114,10 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#e8e8e8',
         paddingTop: 20,
+    },
+    listContainer: {
+        flex: 1, 
+        marginBottom: 50, 
     },
     flat: {
         margin: 10,
@@ -149,10 +156,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         position: 'absolute',
         height: 50,
-        width: 50,
+        width: 70,
         bottom: 30,
         left: 20,
         borderRadius: 30,
+        marginTop: 100,
     },
     iconBtn: {
         color: '#FFF',

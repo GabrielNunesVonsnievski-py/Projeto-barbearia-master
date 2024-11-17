@@ -98,7 +98,7 @@ export default function Agendamento({ navigation }) {
       const barbeiroSelecionado = barbeiros.find(b => b.id === barbeiro);
       const servicoSelecionado = servicos.find(s => s.id === servico);
       
-      const disponivel = await checkDisponibilidade(data, hora, barbeiroSelecionado.nome);
+      const disponivel = await checkDisponibilidade(data, hora, barbeiroSelecionado);
   
       if (!disponivel) {
         Alert.alert('Horário Indisponível', 'Este horário já está agendado. Por favor, escolha outro horário.');
@@ -129,7 +129,7 @@ export default function Agendamento({ navigation }) {
   
       Alert.alert(
         'Agendamento Confirmado!',
-        `Barbeiro: ${barbeiroSelecionado.nome}\nServiço: ${servicoSelecionado.tipo}\nLocal: Dr. Rua José De Pata, 471`, // Atualizando a mensagem de confirmação
+        `Barbeiro: ${barbeiroSelecionado.nome}\nServiço: ${servicoSelecionado.tipo}\nLocal: Dr. Rua José De Pata, 471`, 
         [{ text: 'OK', onPress: () => console.log('OK Pressed') }]
       );
   
@@ -137,13 +137,30 @@ export default function Agendamento({ navigation }) {
     } catch (error) {
       console.error("Error adding agendamento: ", error);
     }
+
+    useEffect(() => {
+      const updateHorariosDisponiveis = () => {
+        if (dayjs(date).isSame(dayjs(), 'day')) { 
+          // Se a data selecionada for o dia atual
+          const horarioAtual = dayjs();
+          const horariosFiltrados = IntervalodeTempo().filter(horario => {
+            return dayjs(horario, 'HH:mm').isAfter(horarioAtual); // filtra horários após o atual
+          });
+          setIntervaloTempo(horariosFiltrados); // atualiza com os horários filtrados
+        } else {
+          setIntervaloTempo(IntervalodeTempo()); // para outros dias (quando mudar) mostra todos os horários
+        }
+      };
+    
+      updateHorariosDisponiveis(); // atualiza os horários quando a data mudar
+    }, [date]);
   };
   
 
   const checkDisponibilidade = async (data, hora, barbeiroSelecionado) => {
     try {
       const agendamentoCollection = collection(database, "agendamento");
-      const dataString = dayjs(data).format('YYYY-MM-DD'); // Converter data para string
+      const dataString = dayjs(data).format('DD-MM-YYYY'); // Converter data para string
       const q = query(agendamentoCollection, 
         where("data", "==", dataString), 
         where("horario", "==", hora), 
@@ -151,7 +168,7 @@ export default function Agendamento({ navigation }) {
       );
 
       const querySnapshot = await getDocs(q);
-      return querySnapshot.empty; // True == disponicel, False == indisponivel 
+      return querySnapshot.empty; // True == disponivel, False == indisponivel 
     } catch (error) {
       console.error("Error checking availability: ", error);
       return false;
@@ -184,20 +201,33 @@ export default function Agendamento({ navigation }) {
       const barbeiroSelecionado = barbeiros.find(b => b.id === barbeiro);
       if (barbeiroSelecionado && data) {
         const allTimeSlots = IntervalodeTempo(); 
-        const availableTimeSlots = [];
+
+        const promisesDisponiveis = allTimeSlots.map(async intervalo => {
+          const isAvailable = await checkDisponibilidade(data, intervalo, barbeiroSelecionado.nome);
+          return { intervalo, isAvailable };
+        });
+
+        const resolvedSlots = await Promise.all(promisesDisponiveis);
+        const availableTimeSlots = resolvedSlots
+          .filter(slot => slot.isAvailable)
+          .map(slot => slot.intervalo);
+
+       /*  const availableTimeSlots = [];
         for (const intervalo of allTimeSlots) {
           const isAvailable = await checkDisponibilidade(data, intervalo, barbeiroSelecionado.nome);
           if (isAvailable) {
             availableTimeSlots.push(intervalo);
           }
-        }
+        } */
+        
         setIntervaloTempo(availableTimeSlots); 
       } else {
-        setIntervaloTempo([]); // Clear if no barber or date selected
+        setIntervaloTempo([]); // limpa se n tem barbeiro ou data selecionada 
       }
     }, 500), 
     [barbeiro, data]
   );
+
 
   const barbeiroSelecionado = useMemo(() => barbeiros.find(b => b.id === barbeiro), [barbeiros, barbeiro]);
 
@@ -221,7 +251,9 @@ export default function Agendamento({ navigation }) {
     let currentTime = horarioInicio;
   
     while (currentTime.isBefore(horarioFinal)) {
-      intervaloTempo.push(currentTime.format('HH:mm')); // Formata o horário como HH:mm
+      if (currentTime.hour() !== 12){ //pula meio dia(12:00) até 13:00
+        intervaloTempo.push(currentTime.format('HH:mm')); // Formata o horário como HH:mm
+      }
       currentTime = currentTime.add(30, 'minute'); // Adiciona 30 minutos
     }
   
@@ -397,7 +429,8 @@ const styles = StyleSheet.create({
   },
   DateTimePickerData:{
     alignItems: 'center',
-    padding: 20,
+    padding: 0,
+    marginLeft: 100,
     marginBottom: 30,
     marginRight: 100
   },
