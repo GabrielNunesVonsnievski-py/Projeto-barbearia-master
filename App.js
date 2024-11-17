@@ -12,7 +12,6 @@ import Details from './src/Pages/Details';
 import ManagerHome from './src/Pages/ManagerHome';
 import BarbeiroHome from './src/Pages/BarbeiroHome';
 import Loading from './src/Pages/Loading';
-import WhatsApp from './src/Pages/Whatsapp';
 
 export default function App() { 
   const Stack = createStackNavigator();
@@ -43,7 +42,6 @@ export default function App() {
       <Stack.Screen name='ManagerHome' component={ManagerHome} />
       <Stack.Screen name='BarbeiroHome' component={BarbeiroHome} />
       <Stack.Screen name='Loading' component={Loading} />
-      <Stack.Screen name="WhatsApp" component={WhatsApp} />
       </Stack.Navigator>
     </NavigationContainer>
   );

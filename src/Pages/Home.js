@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, Text, ScrollView } from 'react-native';
+import { View, Image, TouchableOpacity, StyleSheet, Text, ScrollView, Linking } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import Loading from './Loading';
 
@@ -12,6 +12,27 @@ export default function Home({ navigation }) {
       setIsLoading(false);
     }, 2000); // 2 segundos de delay que o marcos não gosta
   }, []);
+
+  const openWhatsApp = (phoneNumber, message) => {
+    let url = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
+    Linking.openURL(url).catch((err) => {
+      console.error("Não foi possível abrir o WhatsApp", err);
+    });
+  };
+
+  const openInstagram = (username) => {
+    const url = `https://www.instagram.com/${username}`;
+    Linking.openURL(url).catch((err) => {
+      console.error("Não foi possível abrir o Instagram", err);
+    });
+  };
+
+  const openFacebook = (username) => {
+    const url = `https://www.facebook.com/${username}`;
+    Linking.openURL(url).catch((err) => {
+      console.error("Não foi possível abrir o Facebook", err);
+    });
+  };
 
   if (isLoading) {
     return <Loading />;
@@ -38,15 +59,27 @@ export default function Home({ navigation }) {
           <Text style={styles.addressText}>
             <FontAwesome5 name="map-marker-alt" size={16} color="#b69045" /> R. Dr José de Patta, 471 - Centro, Criciúma - SC, 88802-240
           </Text>
+
           <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Agendamento')}>
             <Text style={styles.buttonText}>Agendar</Text>
           </TouchableOpacity>
+
           <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Horario')}>
             <Text style={styles.buttonText}>Ver agendamentos</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('WhatsApp')}>
-            <Text style={styles.buttonText}>Abrir WhatsApp</Text>
-          </TouchableOpacity>
+
+          {/* Ícones de redes sociais */}
+          <View style={styles.socialIconsContainer}>
+            <TouchableOpacity onPress={() => openWhatsApp('5548999332071', 'Olá!')}>
+              <FontAwesome5 name="whatsapp" size={30} color="#25D366" style={styles.icon} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => openInstagram('majestosobarbearia')}>
+              <FontAwesome5 name="instagram" size={30} color="#C13584" style={styles.icon} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => openFacebook('majestosobarbearia')}>
+              <FontAwesome5 name="facebook" size={30} color="#3b5998" style={styles.icon} />
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
 
@@ -66,11 +99,11 @@ export default function Home({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000', // Cor de fundo semelhante à da página de Agendamento
+    backgroundColor: '#000',
   },
   scrollViewContent: {
     flexGrow: 1,
-    paddingBottom: 80, // Espaço para o footer
+    paddingBottom: 80, 
     alignItems: 'center',
   },
   banner: {
@@ -93,7 +126,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 15,
     padding: 20,
-    backgroundColor: '#FFF', // Cor de fundo semelhante à da página de Agendamento
+    backgroundColor: '#FFF', 
     shadowOpacity: 0.2,
     shadowRadius: 3,
     elevation: 5,
@@ -141,5 +174,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 5,
+  },
+  socialIconsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 15,
+    width: '60%',
+  },
+  icon: {
+    marginHorizontal: 10,
   },
 });
