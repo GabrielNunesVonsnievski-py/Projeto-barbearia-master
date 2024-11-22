@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, Modal, ScrollView } from 'react-native';
-import { database, doc, updateDoc } from "../Config/firebaseconfig";
+import { database, doc, updateDoc, collection, getDocs, query, where } from "../Config/firebaseconfig";
 import DateTimePicker from '@react-native-community/datetimepicker';
-import Loading from './Loading';
 import { Picker } from '@react-native-picker/picker';
+import dayjs from 'dayjs';
+import Loading from './Loading';
 
 export default function Details({ navigation, route }) {
     const [isLoading, setIsLoading] = useState(true);
@@ -15,80 +16,122 @@ export default function Details({ navigation, route }) {
     const [showPickerModal, setShowPickerModal] = useState(false);
     const idagendamento = route.params.id;
 
+    const checkDisponibilidade = async (data, hora) => {
+        try {
+            const agendamentoCollection = collection(database, "agendamento");
+            const dataString = dayjs(data).format('DD-MM-YYYY');
+            const q = query(agendamentoCollection,
+                where("data", "==", dataString),
+                where("horario", "==", hora)
+            );
+
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.empty; // true == disponivel  false == indisponivel
+        } catch (error) {
+            console.error("Erro ao verificar disponibilidade:", error);
+            return false;
+        }
+    };
+
+
+    const gerarHorariosDisponiveis = useCallback(async () => {
+        const allTimeSlots = IntervalodeTempo();
+        const promisesDisponiveis = allTimeSlots.map(async intervalo => {
+            const isAvailable = await checkDisponibilidade(dataEdit, intervalo);
+            return { intervalo, isAvailable };
+        });
+
+        const resolvedSlots = await Promise.all(promisesDisponiveis);
+        const availableTimeSlots = resolvedSlots
+            .filter(slot => slot.isAvailable)
+            .map(slot => slot.intervalo);
+
+        setHorariosDisponiveis(availableTimeSlots);
+    }, [dataEdit]);
+
+    // Atualizar horários disponíveis quando a data mudar
+    useEffect(() => {
+        gerarHorariosDisponiveis();
+    }, [dataEdit, gerarHorariosDisponiveis]);
+
+    // Atualizar estado de carregamento
     useEffect(() => {
         setTimeout(() => {
             setIsLoading(false);
         }, 2000);
     }, []);
 
-    useEffect(() => {
-        if (!route.params.hora || isNaN(new Date(route.params.hora))) {
-            console.warn('Horário inválido:', route.params.hora);
-        }
-        if (!route.params.data || isNaN(new Date(route.params.data))) {
-            console.warn('Data inválida:', route.params.data);
-        }
-    }, [route.params]);
-
-    useEffect(() => {
-        const gerarHorariosDisponiveis = () => {
-            const horarios = [];
-            const inicio = new Date();
-            inicio.setHours(8, 0, 0, 0);
-            const fim = new Date();
-            fim.setHours(17, 30, 0, 0);
-
-            for (let hora = inicio; hora <= fim; hora.setMinutes(hora.getMinutes() + 30)) {
-                horarios.push(hora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+    const handleDateChange = (event, selectedDate) => {
+        setShowDatePicker(false);
+        if (selectedDate) {
+            const diaNaoUtil = dayjs(selectedDate).day(); // 0 = domingo, 6 = sábado
+            if (diaNaoUtil === 0) {
+                Alert.alert('Dia inválido', 'Selecione um dia de segunda a sábado.');
+                return;
             }
-            setHorariosDisponiveis(horarios);
-        };
+            setDataEdit(selectedDate);
+        }
+    };
 
-        gerarHorariosDisponiveis();
-    }, []);
+    const IntervalodeTempo = () => {
+        const intervaloTempo = [];
+        const horarioInicio = dayjs().hour(8).minute(0); 
+        const horarioFinal = dayjs().hour(18).minute(0); 
+
+        let currentTime = horarioInicio;
+
+        while (currentTime.isBefore(horarioFinal)) {
+            if (currentTime.hour() !== 12) { 
+                intervaloTempo.push(currentTime.format('HH:mm'));
+            }
+            currentTime = currentTime.add(30, 'minute'); 
+        }
+
+        return intervaloTempo;
+    };
 
     function handleHorarioChange(itemValue) {
+        setHorarioSelecionado(itemValue);
         const [hour, minute] = itemValue.split(':');
         const novoHorario = new Date();
         novoHorario.setHours(parseInt(hour), parseInt(minute), 0, 0);
         setHorarioEdit(novoHorario);
-        setHorarioSelecionado(itemValue);
         setShowPickerModal(false);
     }
 
-    function handleDateChange(event, selectedDate) {
-        setShowDatePicker(false);
-        if (selectedDate) {
-            setDataEdit(selectedDate);
-        }
-    }
-
     function editHorario(hora, id, data) {
-        const HorarioDocRef = doc(database, "agendamento", id);
-        const dataDocRef = doc(database, "agendamento", id);
+        checkDisponibilidade(data, horarioSelecionado).then(isAvailable => {
+            if (!isAvailable) {
+                Alert.alert('Horário Indisponível', 'Este horário já está agendado. Escolha outro horário.');
+                return;
+            }
 
-        const horaFormatada = hora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const offset = data.getTimezoneOffset() * 60000;
-        const dataLocal = new Date(data.getTime() - offset);
-        const dataFormatada = dataLocal.toISOString().split('T')[0];
+            const HorarioDocRef = doc(database, "agendamento", id);
+            const dataDocRef = doc(database, "agendamento", id);
 
-        updateDoc(HorarioDocRef, { horario: horaFormatada })
-            .then(() => {
-                console.log("Horário atualizado com sucesso!");
-                updateDoc(dataDocRef, { data: dataFormatada })
-                    .then(() => {
-                        console.log("Data atualizada com sucesso!");
-                        Alert.alert("Sucesso", "Os dados foram salvos com sucesso.");
-                        navigation.navigate('Home');
-                    })
-                    .catch((error) => {
-                        console.error("Erro ao atualizar data:", error);
-                    });
-            })
-            .catch((error) => {
-                console.error("Erro ao atualizar horário:", error);
-            });
+            const horaFormatada = hora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            const offset = data.getTimezoneOffset() * 60000;
+            const dataLocal = new Date(data.getTime() - offset);
+            const dataFormatada = dataLocal.toISOString().split('T')[0];
+
+            updateDoc(HorarioDocRef, { horario: horaFormatada })
+                .then(() => {
+                    console.log("Horário atualizado com sucesso!");
+                    updateDoc(dataDocRef, { data: dataFormatada })
+                        .then(() => {
+                            console.log("Data atualizada com sucesso!");
+                            Alert.alert("Sucesso", "Os dados foram salvos com sucesso.");
+                            navigation.navigate('Home');
+                        })
+                        .catch(error => console.error("Erro ao atualizar data:", error));
+                })
+                .catch(error => console.error("Erro ao atualizar horário:", error));
+        });
     }
+
+    const showTimepicker = () => {
+        setShowTime(true);
+      };
 
     if (isLoading) {
         return <Loading />;
@@ -105,7 +148,7 @@ export default function Details({ navigation, route }) {
             </View>
             <View style={styles.contentWrapper}>
                 <View style={styles.content}>
-                    <Text style={styles.txtdescription}> Editar Horário </Text>
+                    <Text style={styles.txtdescription}>Editar Horário</Text>
 
                     <TouchableOpacity style={styles.timeButton} onPress={() => setShowPickerModal(true)}>
                         <Text style={styles.timeButtonText}>Selecione o Horário</Text>
@@ -132,13 +175,13 @@ export default function Details({ navigation, route }) {
                     )}
 
                     <Text style={styles.selectedText}>
-                        Data selecionada: {dataEdit.toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        Data selecionada: {dayjs(dataEdit).format('DD/MM/YYYY')}
                     </Text>
 
                     <TouchableOpacity
                         style={styles.btnsave}
-                        onPress={() => { editHorario(horarioEdit, idagendamento, dataEdit) }}>
-                        <Text style={styles.txtbtnsave}> Salvar horário </Text>
+                        onPress={() => editHorario(horarioEdit, idagendamento, dataEdit)}>
+                        <Text style={styles.txtbtnsave}>Salvar horário</Text>
                     </TouchableOpacity>
 
                     {/* Modal para o Picker */}
@@ -250,13 +293,15 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        padding: 20,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContent: {
         width: '80%',
-        backgroundColor: '#fff',
+        height: '50%',
         borderRadius: 20,
         padding: 20,
+        backgroundColor: '#8c8c8c',
     },
     closeButton: {
         marginTop: 15,
@@ -271,7 +316,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     picker: {
-        height: 200,
-        width: '100%',
+        flex: 1,
+        justifyContent: 'center',
     },
 });

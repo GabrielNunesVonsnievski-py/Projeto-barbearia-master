@@ -91,7 +91,7 @@ export default function Horario({ navigation }) {
                                             horario: item.horario
                                         })
                                     }}>
-                                    {item.data + '                    ' + item.horario}
+                                    {item.data + '          ' + item.horario  +'          ' +item.barbeiro}
                                 </Text>
                             </View>
                         )
