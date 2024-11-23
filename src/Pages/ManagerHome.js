@@ -4,8 +4,9 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker'; // Import DateTimePicker
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { auth, database } from '../Config/firebaseconfig'; 
+import { auth, database, doc, deleteDoc } from '../Config/firebaseconfig'; 
 import dayjs from 'dayjs';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 
 export default function ManagerHome({ navigation }) {
@@ -118,6 +119,18 @@ export default function ManagerHome({ navigation }) {
     getAgendamentos();
   }, [SelectedBarbeiro]);
 
+  function deleteHorario(id) {
+    const HorarioDocRef = doc(database, "agendamento", id);
+    deleteDoc(HorarioDocRef)
+        .then(() => {
+            console.log(`Agendamento com ID ${id} excluído com sucesso.`);
+            // Atualize os agendamentos, se necessário
+            setAgendamentos(prev => prev.filter(item => item.id !== id));
+        })
+        .catch((error) => {
+            console.error("Erro ao excluir agendamento:", error);
+        });
+  };  
 
   const onChangeDate = (event, selectedDate) => {
     const currentDate = selectedDate || new Date();
@@ -199,6 +212,13 @@ export default function ManagerHome({ navigation }) {
                   <Text style={styles.agendamentoText}>Horário: {agendamento.horario}</Text>
                   <Text style={styles.agendamentoText}>Serviço: {agendamento.servico}</Text>
                   <Text style={styles.agendamentoText}>Cliente: {agendamento.nomeCliente}</Text>
+                  <TouchableOpacity
+                    style={styles.btnDeleteTask}
+                    onPress={() => {
+                    deleteHorario(agendamento.id)
+                   }}>
+                    <AntDesign name="delete" size={24} color="#FF4C4C" />
+                  </TouchableOpacity>
                 </View>
               ))
             ) : (
@@ -228,6 +248,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  btnDeleteTask: {
+    color: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+  },  
   container: {
     flex: 1,
     width: '100%',

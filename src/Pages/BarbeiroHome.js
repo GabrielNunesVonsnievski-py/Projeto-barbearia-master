@@ -11,6 +11,7 @@ export default function BarbeiroHome({ navigation }) {
   const [agendamentos, setAgendamentos] = useState([]);
   const [barbeiroLogado, setBarbeiroLogado] = useState(null);
   const [barbeiros, setBarbeiros] = useState([]);
+  const [filtroAtual, setFiltroAtual] = useState('todos');
 
   const useBarbeirosRef = query(
     collection(database, "cliente"),
@@ -71,8 +72,8 @@ export default function BarbeiroHome({ navigation }) {
         }));
 
         agendamentoList.sort((a, b) => {
-          const dataA = dayjs(`${a.data} ${a.horario}`, 'YYYY-MM-DD HH:mm');
-          const dataB = dayjs(`${b.data} ${b.horario}`, 'YYYY-MM-DD HH:mm');
+          const dataA = dayjs(`${a.data} ${a.horario}`, 'DD-MM-YYYY HH:mm');
+          const dataB = dayjs(`${b.data} ${b.horario}`, 'DD-MM-YYYY HH:mm');
           return dataA - dataB;
         });
   
@@ -87,6 +88,18 @@ export default function BarbeiroHome({ navigation }) {
   useEffect(() => {
     getAgendamentos();
   }, [barbeiros]);
+
+  const isAgendamentoHoje = (data) => {
+    const hoje = dayjs().format('DD-MM-YYYY');
+    return data === hoje;
+  };
+
+  const agendamentosFiltrados = agendamentos.filter((agendamento) => {
+    if (filtroAtual === 'hoje') {
+      return isAgendamentoHoje(agendamento.data); // Mostra somente agendamentos do dia
+    }
+    return true; // Mostra todos os agendamentos
+  });
 
   // Função para obter o valor do serviço a partir da tabela 'servico'
   const getServicoValor = async (servico) => {
@@ -207,11 +220,27 @@ export default function BarbeiroHome({ navigation }) {
         <Text style={styles.bannerText}>MAJESTOSO</Text>
       </View>
 
+      <View style={styles.filterContainer}>
+        <TouchableOpacity
+          style={[styles.filterButton, filtroAtual === 'hoje' && styles.filterButtonActive]}
+          onPress={() => setFiltroAtual('hoje')}
+        >
+          <Text style={styles.filterButtonText}>Agendamentos do Dia</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterButton, filtroAtual === 'todos' && styles.filterButtonActive]}
+          onPress={() => setFiltroAtual('todos')}
+        >
+          <Text style={styles.filterButtonText}>Todos os Agendamentos</Text>
+        </TouchableOpacity>
+      </View>
+
+
       {/* Conteúdo Principal */}
       <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        {agendamentos.length > 0 ? (
-          agendamentos.map((agendamento) => {
+        {agendamentosFiltrados.length > 0 ? (
+          agendamentosFiltrados.map((agendamento) => {
             const agendamentoPassado = isAgendamentoPassado(agendamento.data, agendamento.horario);
             return (
               <View key={agendamento.id} style={[styles.agendamentoContainer, agendamentoPassado ? {} : styles.containerDisabled]}>
@@ -272,6 +301,23 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginVertical: 10,
+  },
+  filterButton: {
+    padding: 10,
+    borderRadius: 5,
+    backgroundColor: '#f0f0f0',
+  },
+  filterButtonActive: {
+    backgroundColor: '#b69045',
+  },
+  filterButtonText: {
+    color: '#000',
+    fontWeight: 'bold',
   },
   buttonDisabled: {
     backgroundColor: '#ef4444',
