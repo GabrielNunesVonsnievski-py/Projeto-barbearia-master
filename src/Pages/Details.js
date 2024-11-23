@@ -14,6 +14,7 @@ export default function Details({ navigation, route }) {
     const [horariosDisponiveis, setHorariosDisponiveis] = useState([]);
     const [horarioSelecionado, setHorarioSelecionado] = useState('');
     const [showPickerModal, setShowPickerModal] = useState(false);
+    const [intervaloTempo, setIntervaloTempo] = useState([]); 
     const idagendamento = route.params.id;
 
     const checkDisponibilidade = async (data, hora) => {
@@ -77,18 +78,28 @@ export default function Details({ navigation, route }) {
         const intervaloTempo = [];
         const horarioInicio = dayjs().hour(8).minute(0); 
         const horarioFinal = dayjs().hour(18).minute(0); 
-
+        const horarioAtual = dayjs(); 
+      
         let currentTime = horarioInicio;
-
+      
         while (currentTime.isBefore(horarioFinal)) {
-            if (currentTime.hour() !== 12) { 
-                intervaloTempo.push(currentTime.format('HH:mm'));
+          // filtra horários já passados no dia atual
+          if (dayjs(date).isSame(horarioAtual, 'day')) {
+            if (currentTime.isAfter(horarioAtual) && currentTime.hour() !== 12) {
+              intervaloTempo.push(currentTime.format('HH:mm'));
             }
-            currentTime = currentTime.add(30, 'minute'); 
+          } else {
+            // Para outros dias adiciona todos os horários
+            if (currentTime.hour() !== 12) {
+              intervaloTempo.push(currentTime.format('HH:mm'));
+            }
+          }
+      
+          currentTime = currentTime.add(30, 'minute'); // incrementa 30 minutos
         }
-
+      
         return intervaloTempo;
-    };
+      };
 
     function handleHorarioChange(itemValue) {
         setHorarioSelecionado(itemValue);

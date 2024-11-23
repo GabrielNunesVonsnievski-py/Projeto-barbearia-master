@@ -345,7 +345,7 @@ export default function Agendamento({ navigation }) {
               onValueChange={(itemValue) => setServico(itemValue)}
             >
               {servicos.map((servico) => (
-                <Picker.Item key={servico.id} label={servico.tipo + '   R$' + servico.valor} value={servico.id} />
+                <Picker.Item key={servico.id} label={servico.tipo + '     R$' + servico.valor} value={servico.id} />
               ))}
             </Picker>
 

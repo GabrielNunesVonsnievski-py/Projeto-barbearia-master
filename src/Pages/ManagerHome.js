@@ -54,9 +54,12 @@ export default function ManagerHome({ navigation }) {
   // Função para buscar o faturamento diário dos barbeiros com base na data selecionada
   const getFaturamentoBarbeiros = async (date = selectedDate) => {
     try {
+      const hoje = dayjs(date).format('YYYY-MM-DD');
       const faturamentoRef = collection(database, "faturamento_diario");
       const faturamentoSnap = await getDocs(faturamentoRef);
-      const faturamentoList = faturamentoSnap.docs.map((doc) => ({
+      const faturamentoList = faturamentoSnap.docs
+      .filter(doc => doc.id.includes(hoje)) // Filtra pelo dia atual
+      .map((doc) => ({
         ...doc.data(),
         id: doc.id,
       }));
@@ -107,8 +110,8 @@ export default function ManagerHome({ navigation }) {
       }));
       
       agendamentoList.sort((a, b) => {
-        const dataA = dayjs(`${a.data} ${a.horario}`, 'YYYY-MM-DD HH:mm');
-        const dataB = dayjs(`${b.data} ${b.horario}`, 'YYYY-MM-DD HH:mm');
+        const dataA = dayjs(`${a.data} ${a.horario}`, 'DD-MM-YYYY HH:mm');
+        const dataB = dayjs(`${b.data} ${b.horario}`, 'DD-MM-YYYY HH:mm');
         return dataA - dataB;
       });
 
@@ -138,6 +141,11 @@ export default function ManagerHome({ navigation }) {
     setSelectedDate(currentDate); // Atualiza a data selecionada
     getFaturamentoBarbeiros(currentDate); // Atualiza o faturamento com base na data escolhida
   };
+
+  useEffect(() => {
+    getFaturamentoBarbeiros(selectedDate);
+  }, [selectedDate, SelectedBarbeiro]);
+  
 
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
@@ -185,17 +193,29 @@ export default function ManagerHome({ navigation }) {
           {/* Exibe o faturamento diário dos barbeiros */}
           <View style={styles.faturamentoContainer}>
             <Text style={styles.faturamentoTitle}>Faturamento Diário dos Barbeiros</Text>
-            {faturamentoBarbeiros.map((barbeiro) => (
-              <View key={barbeiro.id} style={styles.faturamentoItem}>
-                {barbeiros.find((b) => b.id === barbeiro.id) && (
-                  <Text style={styles.faturamentoText}>
-                    {barbeiros.find((b) => b.id === barbeiro.id).nome} 
-                    - R$ {barbeiro.faturamento || 0} em {selectedDate.toLocaleDateString()}
-                  </Text>
-                )}
-              </View>
-            ))}
+            {faturamentoBarbeiros.length > 0 ? (
+              faturamentoBarbeiros.map((barbeiro) => (
+                <View key={barbeiro.id} style={styles.faturamentoItem}>
+                  {barbeiros.find((b) => b.id === barbeiro.id.split('_')[0]) && ( // Ajusta o barbeiro pelo ID
+                    <View>
+                      <Text style={styles.faturamentoText}>
+                        {barbeiros.find((b) => b.id === barbeiro.id.split('_')[0]).nome}
+                      </Text>
+                      {Object.entries(barbeiro.faturamento || {}).map(([metodo, valor]) => (
+                        <Text key={metodo} style={styles.faturamentoText}>
+                          {metodo}: R$ {valor.toFixed(2)}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              ))
+            ) : (
+              <Text style={styles.noAgendamentoText}>Nenhum faturamento encontrado</Text>
+            )}
           </View>
+
+
 
           <TouchableOpacity onPress={encerrarExpediente} style={styles.button}>
             <Text style={styles.buttonText}>Encerrar expediente</Text>
@@ -309,6 +329,11 @@ const styles = StyleSheet.create({
   },
   faturamentoItem: {
     marginBottom: 5,
+  },
+  noAgendamentoText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'red',
   },
   faturamentoText: {
     color: '#000',

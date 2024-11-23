@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Image, TouchableOpacity, StyleSheet, Text, ScrollView, Alert} from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { FontAwesome5 } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import { auth, database, getDocs, deleteDoc, updateDoc, doc } from '../Config/firebaseconfig';
@@ -12,6 +13,7 @@ export default function BarbeiroHome({ navigation }) {
   const [barbeiroLogado, setBarbeiroLogado] = useState(null);
   const [barbeiros, setBarbeiros] = useState([]);
   const [filtroAtual, setFiltroAtual] = useState('todos');
+  const [formasPagamento, setFormasPagamento] = useState({});
 
   const useBarbeirosRef = query(
     collection(database, "cliente"),
@@ -72,8 +74,8 @@ export default function BarbeiroHome({ navigation }) {
         }));
 
         agendamentoList.sort((a, b) => {
-          const dataA = dayjs(`${a.data} ${a.horario}`, 'DD-MM-YYYY HH:mm');
-          const dataB = dayjs(`${b.data} ${b.horario}`, 'DD-MM-YYYY HH:mm');
+          const dataA = dayjs(`${a.data} ${a.horario}`, 'YYYY-MM-DD HH:mm');
+          const dataB = dayjs(`${b.data} ${b.horario}`, 'YYYY-MM-DD HH:mm');
           return dataA - dataB;
         });
   
@@ -96,11 +98,11 @@ export default function BarbeiroHome({ navigation }) {
 
   const agendamentosFiltrados = agendamentos.filter((agendamento) => {
     if (filtroAtual === 'hoje') {
-      return isAgendamentoHoje(agendamento.data); // Mostra somente agendamentos do dia
+      return isAgendamentoHoje(agendamento.data); // somente agendamentos do dia
     }
     return true; // Mostra todos os agendamentos
   });
-
+  
   // Função para obter o valor do serviço a partir da tabela 'servico'
   const getServicoValor = async (servico) => {
     try {
@@ -124,26 +126,30 @@ export default function BarbeiroHome({ navigation }) {
   };
   
 
-  // Função para acumular o valor no faturamento diário do barbeiro
-  const acumularFaturamentoDiario = async (valor, barbeiroId) => {
-    try {
-      // const hoje = dayjs().format('YYYY-MM-DD');
-      const barbeiroDocRef = doc(database, "faturamento_diario", barbeiroId); //`${barbeiroId}_${hoje}`);
-      const barbeiroDocSnap = await getDoc(barbeiroDocRef);
   
-      if (barbeiroDocSnap.exists()) {
-        const barbeiroData = barbeiroDocSnap.data();
-        const novoFaturamento = (barbeiroData.faturamento || 0) + valor;
-        await updateDoc(barbeiroDocRef, { faturamento: novoFaturamento });
-        console.log('Faturamento diário atualizado:', novoFaturamento);
-      } else {
-        await setDoc(barbeiroDocRef, { faturamento: valor, data: hoje });
-        console.log('Novo faturamento diário criado:', valor);
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar o faturamento diário do barbeiro:', error);
+  const acumularFaturamentoDiario = async (valor, barbeiroId, formaPagamento) => {
+  try {
+    const hoje = dayjs().format('DD-MM-YYYY');
+    const barbeiroDocRef = doc(database, 'faturamento_diario', `${barbeiroId}_${hoje}`); //doc(database, 'faturamento_diario', barbeiro.id); 
+    const barbeiroDocSnap = await getDoc(barbeiroDocRef);
+
+    if (barbeiroDocSnap.exists()) {
+      const barbeiroData = barbeiroDocSnap.data();
+      const novoFaturamento = {
+        ...barbeiroData.faturamento,
+        [formaPagamento]: (barbeiroData.faturamento[formaPagamento] || 0) + valor,
+      };
+      await updateDoc(barbeiroDocRef, { faturamento: novoFaturamento });
+      console.log('Faturamento diário atualizado:', novoFaturamento);
+    } else {
+      const novoFaturamento = { [formaPagamento]: valor };
+      await setDoc(barbeiroDocRef, { faturamento: novoFaturamento, data: hoje });
+      console.log('Novo faturamento diário criado:', novoFaturamento);
     }
-  };
+  } catch (error) {
+    console.error('Erro ao atualizar o faturamento diário do barbeiro:', error);
+  }
+};
   
 
   const excluirAgendamento = async (idAgendamento) => {
@@ -156,27 +162,31 @@ export default function BarbeiroHome({ navigation }) {
     }
   };
 
-  const handleConfirmacao = async (idAgendamento, servico, veio, data, hora) => {
-    const dataAgendamento = dayjs(`${data} ${hora}`, 'YYYY-MM-DD HH:mm');
-    const agora = dayjs();
+  const handleConfirmacao = async (idAgendamento, servico, veio, data, hora, formaPagamento = '') => {
+    try {
+      // Converte a data para o formato ISO
+      const dataAgendamentoISO = dayjs(data, 'DD-MM-YYYY').format('YYYY-MM-DD');
+      const dataAgendamento = dayjs(`${dataAgendamentoISO} ${hora}`, 'YYYY-MM-DD HH:mm');
+      const agora = dayjs();
   
-    // Verifica se o agendamento já passou
-    if (agora.isBefore(dataAgendamento)) {
-      Alert.alert(
-        'Horário Expirado',
-        'O horário do agendamento ainda não passou. Não é possível manipular o status do agendamento.'
-      );
-      return;
-    }
+      console.log('Data do Agendamento (ISO):', dataAgendamentoISO);
+      console.log('Data e Hora do Agendamento:', dataAgendamento.toISOString());
+      console.log('Agora:', agora.toISOString());
   
-    const mensagem = veio
-      ? 'Você confirma que o cliente veio?'
-      : 'Você confirma que o cliente não veio?';
+      // Verifica se o agendamento ainda não passou
+      if (agora.isBefore(dataAgendamento)) {
+        Alert.alert(
+          'Horário Expirado',
+          'O horário do agendamento ainda não passou. Não é possível manipular o status do agendamento.'
+        );
+        return;
+      }
   
-    Alert.alert(
-      'Confirmação',
-      mensagem,
-      [
+      const mensagem = veio
+        ? 'Você confirma que o cliente veio?'
+        : 'Você confirma que o cliente não veio?';
+  
+      Alert.alert('Confirmação', mensagem, [
         {
           text: 'Cancelar',
           style: 'cancel',
@@ -186,24 +196,48 @@ export default function BarbeiroHome({ navigation }) {
           onPress: async () => {
             if (veio) {
               const valorServico = await getServicoValor(servico);
-              await acumularFaturamentoDiario(valorServico, barbeiroLogado);
+              await acumularFaturamentoDiario(valorServico, barbeiroLogado, formaPagamento);
             }
             await excluirAgendamento(idAgendamento);
-            await getAgendamentos(); 
+            await getAgendamentos();
           },
         },
-      ],
-    );
+      ]);
+    } catch (error) {
+      console.error('Erro em handleConfirmacao:', error);
+    }
   };
   
+  
+  
+  const atualizarFormaPagamento = (id, forma) => {
+    setFormasPagamento((prevState) => ({
+      ...prevState,
+      [id]: forma,
+    }));
+  };
   
 
   const isAgendamentoPassado = (data, hora) => {
-    const dataAgendamento = dayjs(`${data} ${hora}`, 'YYYY-MM-DD HH:mm');
-    const agora = dayjs();
-    return agora.isAfter(dataAgendamento);
-  };
+    try {
+      // Formata a data no padrão esperado e cria o objeto completo de agendamento
+      const [dia, mes, ano] = data.split('-'); // divide o formato DD-MM-YYYY
+      const [horas, minutos] = hora.split(':'); 
   
+      // Cria um objeto Date diretamente no formato ISO
+      const dataAgendamento = new Date(ano, mes - 1, dia, horas, minutos);
+      const agora = new Date(); 
+  
+      console.log('Data do Agendamento:', dataAgendamento.toISOString());
+      console.log('Agora:', agora.toISOString());
+  
+      // retorna verdadeiro se o agendamento já passou
+      return dataAgendamento < agora;
+    } catch (error) {
+      console.error('Erro ao verificar se o agendamento já passou:', error);
+      return false; // retorna falso em caso de erro
+    }
+  };
 
   if (isLoading) {
     return <Loading />;
@@ -242,39 +276,68 @@ export default function BarbeiroHome({ navigation }) {
         {agendamentosFiltrados.length > 0 ? (
           agendamentosFiltrados.map((agendamento) => {
             const agendamentoPassado = isAgendamentoPassado(agendamento.data, agendamento.horario);
+            const formaPagamento = formasPagamento[agendamento.id] || '';
             return (
               <View key={agendamento.id} style={[styles.agendamentoContainer, agendamentoPassado ? {} : styles.containerDisabled]}>
-                <Text style={styles.agendamentoText}>Data: {agendamento.data}</Text>
-                <Text style={styles.agendamentoText}>Horário: {agendamento.horario}</Text>
-                <Text style={styles.agendamentoText}>Serviço: {agendamento.servico}</Text>
-                <Text style={styles.agendamentoText}>Cliente: {agendamento.nomeCliente}</Text>
-                
-                <View style={styles.buttonContainer}>
-                  <TouchableOpacity
-                    style={[
-                      styles.buttonConfirm,
-                      agendamentoPassado ? {} : styles.buttonDisabled
-                    ]}
-                    onPress={() => handleConfirmacao(agendamento.id, agendamento.servico, true, agendamento.data, agendamento.horario)}
-                    disabled={!agendamentoPassado}
-                  >
-                    <Text style={styles.buttonText}>Cliente veio</Text>
-                  </TouchableOpacity>
+              <Text style={styles.agendamentoText}>Data: {agendamento.data}</Text>
+              <Text style={styles.agendamentoText}>Horário: {agendamento.horario}</Text>
+              <Text style={styles.agendamentoText}>Serviço: {agendamento.servico}</Text>
+              <Text style={styles.agendamentoText}>Cliente: {agendamento.nomeCliente}</Text>
 
-                  <TouchableOpacity
-                    style={[
-                      styles.buttonCancel,
-                      agendamentoPassado ? {} : styles.buttonDisabled
-                    ]}
-                    onPress={() => handleConfirmacao(agendamento.id, agendamento.servico, false, agendamento.data, agendamento.horario)}
-                    disabled={!agendamentoPassado}
-                  >
-                    <Text style={styles.buttonText}>Cliente não veio</Text>
-                  </TouchableOpacity>
-                </View>
+              <Picker
+                selectedValue={formaPagamento}
+                onValueChange={(itemValue) => atualizarFormaPagamento(agendamento.id, itemValue)}
+                style={styles.picker}
+              >
+                <Picker.Item label="Selecione a Forma de Pagamento" value="" />
+                <Picker.Item label="Cartão" value="Cartão" />
+                <Picker.Item label="Pix" value="Pix" />
+                <Picker.Item label="Dinheiro" value="Dinheiro" />
+              </Picker>
+
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.buttonConfirm,
+                    agendamentoPassado && formaPagamento ? {} : styles.buttonDisabled,
+                  ]}
+                  onPress={() =>
+                    handleConfirmacao(
+                      agendamento.id,
+                      agendamento.servico,
+                      true,
+                      agendamento.data,
+                      agendamento.horario,
+                      formaPagamento
+                    )
+                  }
+                  disabled={!agendamentoPassado || formaPagamento === ''}
+                >
+                  <Text style={styles.buttonText}>Cliente veio</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.buttonCancel,
+                    agendamentoPassado ? {} : styles.buttonDisabled,
+                  ]}
+                  onPress={() =>
+                    handleConfirmacao(
+                      agendamento.id,
+                      agendamento.servico,
+                      false,
+                      agendamento.data,
+                      agendamento.horario
+                    )
+                  }
+                  disabled={!agendamentoPassado}
+                >
+                  <Text style={styles.buttonText}>Cliente não veio</Text>
+                </TouchableOpacity>
               </View>
-            );
-          })
+            </View>
+          );
+        })
         ) : (
           <Text style={styles.noAgendamentoText}>Nenhum agendamento encontrado</Text>
         )}
@@ -320,8 +383,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   buttonDisabled: {
-    backgroundColor: '#ef4444',
+    backgroundColor: '#ccc', // Cinza para botões desabilitados
+    color: '#999',
+    opacity: 0.5, 
   },
+  
   containerDisabled: {
     backgroundColor: 'gray',
   },
