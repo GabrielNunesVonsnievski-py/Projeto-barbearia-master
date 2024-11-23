@@ -245,20 +245,31 @@ export default function Agendamento({ navigation }) {
 
   const IntervalodeTempo = () => {
     const intervaloTempo = [];
-    const horarioInicio = dayjs().hour(8).minute(0); //horario de início: 8:00
-    const horarioFinal = dayjs().hour(18).minute(0);  //horario q termina: 18:00
+    const horarioInicio = dayjs().hour(8).minute(0); // horário de início: 08:00
+    const horarioFinal = dayjs().hour(18).minute(0); // horário final: 18:00
+    const horarioAtual = dayjs(); // horário atual para referência
   
     let currentTime = horarioInicio;
   
     while (currentTime.isBefore(horarioFinal)) {
-      if (currentTime.hour() !== 12){ //pula meio dia(12:00) até 13:00
-        intervaloTempo.push(currentTime.format('HH:mm')); // Formata o horário como HH:mm
+      // filtra horários já passados no dia atual
+      if (dayjs(date).isSame(horarioAtual, 'day')) {
+        if (currentTime.isAfter(horarioAtual) && currentTime.hour() !== 12) {
+          intervaloTempo.push(currentTime.format('HH:mm'));
+        }
+      } else {
+        // Para outros dias adiciona todos os horários
+        if (currentTime.hour() !== 12) {
+          intervaloTempo.push(currentTime.format('HH:mm'));
+        }
       }
-      currentTime = currentTime.add(30, 'minute'); // Adiciona 30 minutos
+  
+      currentTime = currentTime.add(30, 'minute'); // incrementa 30 minutos
     }
   
     return intervaloTempo;
   };
+  
 
   useEffect(() => {
     if(dayjs(date).isSame(dayjs(), 'day')) {
