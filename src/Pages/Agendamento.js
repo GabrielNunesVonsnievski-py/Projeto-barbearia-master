@@ -345,7 +345,7 @@ export default function Agendamento({ navigation }) {
               onValueChange={(itemValue) => setServico(itemValue)}
             >
               {servicos.map((servico) => (
-                <Picker.Item key={servico.id} label={servico.tipo + '     R$' + servico.valor} value={servico.id} />
+                <Picker.Item key={servico.id} label={servico.tipo + '   R$' + servico.valor} value={servico.id} />
               ))}
             </Picker>
 
@@ -385,16 +385,24 @@ export default function Agendamento({ navigation }) {
 
             {showTime && (
               <View>
-                <Text style={styles.label}>Escolha o horário:</Text>
-                  <Picker
-                    selectedValue={hora}
-                    onValueChange={(itemValue) => setHora(itemValue)} 
-                    style={styles.pickerHora}
-                  >
-                    {intervaloTempo.map((intervalo, index) => (
-                      <Picker.Item key={index} label={intervalo} value={intervalo} />
-                    ))}
-                  </Picker>
+                  <Text style={styles.label}>Escolha o horário:</Text>
+                  {intervaloTempo.length > 0 ? (
+                      // Se houver horários disponíveis, exibe o Picker
+                      <Picker
+                          selectedValue={hora}
+                          onValueChange={(itemValue) => setHora(itemValue)}
+                          style={styles.pickerHora}
+                      >
+                          {intervaloTempo.map((intervalo, index) => (
+                              <Picker.Item key={index} label={intervalo} value={intervalo} />
+                          ))}
+                      </Picker>
+                  ) : (
+                      // Se não houver horários disponíveis, exibe a mensagem
+                      <Text style={styles.noHorarioText}>
+                          Horários Indisponíveis, horário de funcionamento: 08:00 às 18:00
+                      </Text>
+                  )}
               </View>
               )}
           </View>

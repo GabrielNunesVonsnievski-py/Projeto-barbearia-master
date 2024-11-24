@@ -19,41 +19,46 @@ export default function Details({ navigation, route }) {
 
     const checkDisponibilidade = async (data, hora) => {
         try {
+            console.log('Verificando disponibilidade para:', data, hora);
             const agendamentoCollection = collection(database, "agendamento");
             const dataString = dayjs(data).format('DD-MM-YYYY');
             const q = query(agendamentoCollection,
                 where("data", "==", dataString),
                 where("horario", "==", hora)
             );
-
+    
             const querySnapshot = await getDocs(q);
-            return querySnapshot.empty; // true == disponivel  false == indisponivel
+            console.log('Disponível?', querySnapshot.empty);
+            return querySnapshot.empty; // true == disponível, false == indisponível
         } catch (error) {
             console.error("Erro ao verificar disponibilidade:", error);
             return false;
         }
     };
-
-
+    
     const gerarHorariosDisponiveis = useCallback(async () => {
-        const allTimeSlots = IntervalodeTempo();
+        const allTimeSlots = IntervalodeTempo(dataEdit); // Certifique-se de passar a data corretamente
         const promisesDisponiveis = allTimeSlots.map(async intervalo => {
             const isAvailable = await checkDisponibilidade(dataEdit, intervalo);
             return { intervalo, isAvailable };
         });
-
+    
         const resolvedSlots = await Promise.all(promisesDisponiveis);
         const availableTimeSlots = resolvedSlots
             .filter(slot => slot.isAvailable)
             .map(slot => slot.intervalo);
+        console.log('Horários após filtro de disponibilidade:', availableTimeSlots);
 
-        setHorariosDisponiveis(availableTimeSlots);
+    
+        setHorariosDisponiveis(availableTimeSlots); // Atualiza o estado com os horários disponíveis
+        return availableTimeSlots; // Garante que a função sempre retorna um array
     }, [dataEdit]);
-
-    // Atualizar horários disponíveis quando a data mudar
+    
+    
     useEffect(() => {
+        // Atualizando os horários disponíveis sempre que `dataEdit` mudar
         gerarHorariosDisponiveis();
-    }, [dataEdit, gerarHorariosDisponiveis]);
+    }, [dataEdit]);
 
     // Atualizar estado de carregamento
     useEffect(() => {
@@ -74,57 +79,62 @@ export default function Details({ navigation, route }) {
         }
     };
 
-    const IntervalodeTempo = () => {
+    const IntervalodeTempo = (date) => {
         const intervaloTempo = [];
         const horarioInicio = dayjs().hour(8).minute(0); 
         const horarioFinal = dayjs().hour(18).minute(0); 
-        const horarioAtual = dayjs(); 
-      
+        const horarioAtual = dayjs(); // hora atual do sistema, sem segundos
+    
         let currentTime = horarioInicio;
-      
+    
         while (currentTime.isBefore(horarioFinal)) {
-          // filtra horários já passados no dia atual
-          if (dayjs(date).isSame(horarioAtual, 'day')) {
-            if (currentTime.isAfter(horarioAtual) && currentTime.hour() !== 12) {
-              intervaloTempo.push(currentTime.format('HH:mm'));
+            if (dayjs(date).isSame(horarioAtual, 'day')) {
+                if (currentTime.isAfter(horarioAtual) && currentTime.hour() !== 12) {
+                    intervaloTempo.push(currentTime.format('HH:mm'));
+                }
+            } else {
+                // Para outros dias, todos os horários são válidos, exceto 12h
+                if (currentTime.hour() !== 12) {
+                    intervaloTempo.push(currentTime.format('HH:mm'));
+                }
             }
-          } else {
-            // Para outros dias adiciona todos os horários
-            if (currentTime.hour() !== 12) {
-              intervaloTempo.push(currentTime.format('HH:mm'));
-            }
-          }
-      
-          currentTime = currentTime.add(30, 'minute'); // incrementa 30 minutos
+            currentTime = currentTime.add(30, 'minute'); // incrementa 30 minutos
         }
-      
+    
         return intervaloTempo;
-      };
+    };
+    
 
-    function handleHorarioChange(itemValue) {
+      const handleHorarioChange = (itemValue) => {
         setHorarioSelecionado(itemValue);
         const [hour, minute] = itemValue.split(':');
         const novoHorario = new Date();
         novoHorario.setHours(parseInt(hour), parseInt(minute), 0, 0);
         setHorarioEdit(novoHorario);
+      
+        // Verifica se o horário é anterior ao atual no dia selecionado
+        if (dayjs(dataEdit).isSame(dayjs(), 'day') && dayjs(novoHorario).isBefore(dayjs())) {
+          Alert.alert('Selecione um horário futuro', 'Você não pode selecionar um horário que já passou no dia de hoje.');
+          return;
+        }
+      
         setShowPickerModal(false);
-    }
+      }
 
-    function editHorario(hora, id, data) {
+      function editHorario(hora, id, data) {
         checkDisponibilidade(data, horarioSelecionado).then(isAvailable => {
             if (!isAvailable) {
                 Alert.alert('Horário Indisponível', 'Este horário já está agendado. Escolha outro horário.');
                 return;
             }
-
+    
             const HorarioDocRef = doc(database, "agendamento", id);
             const dataDocRef = doc(database, "agendamento", id);
-
+    
+            
             const horaFormatada = hora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-            const offset = data.getTimezoneOffset() * 60000;
-            const dataLocal = new Date(data.getTime() - offset);
-            const dataFormatada = dataLocal.toISOString().split('T')[0];
-
+            const dataFormatada = dayjs(data).format('DD-MM-YYYY'); 
+    
             updateDoc(HorarioDocRef, { horario: horaFormatada })
                 .then(() => {
                     console.log("Horário atualizado com sucesso!");
@@ -139,6 +149,18 @@ export default function Details({ navigation, route }) {
                 .catch(error => console.error("Erro ao atualizar horário:", error));
         });
     }
+    
+
+    useEffect(() => {
+        const fetchData = async () => {
+            console.log('Data para gerar horários disponíveis:', dataEdit);
+            const availableTimeSlots = await gerarHorariosDisponiveis();
+            console.log('Horários disponíveis:', availableTimeSlots);
+            setHorariosDisponiveis(availableTimeSlots);
+        };
+    
+        fetchData();
+    }, [dataEdit]);
 
     const showTimepicker = () => {
         setShowTime(true);
@@ -161,7 +183,13 @@ export default function Details({ navigation, route }) {
                 <View style={styles.content}>
                     <Text style={styles.txtdescription}>Editar Horário</Text>
 
-                    <TouchableOpacity style={styles.timeButton} onPress={() => setShowPickerModal(true)}>
+                    <TouchableOpacity style={styles.timeButton} onPress={() => {
+                        if (horariosDisponiveis.length === 0) {
+                            Alert.alert('Sem horários disponíveis', 'Por favor, selecione outra data.');
+                            return;
+                        }
+                        setShowPickerModal(true);
+                    }}>
                         <Text style={styles.timeButtonText}>Selecione o Horário</Text>
                     </TouchableOpacity>
 
@@ -204,16 +232,21 @@ export default function Details({ navigation, route }) {
                     >
                         <View style={styles.modalContainer}>
                             <View style={styles.modalContent}>
-                                <Picker
-                                    selectedValue={horarioSelecionado}
-                                    onValueChange={handleHorarioChange}
-                                    style={styles.picker}
-                                >
-                                    <Picker.Item label="Selecione o Horário" value="" />
-                                    {horariosDisponiveis.map((horario, index) => (
-                                        <Picker.Item key={index} label={horario} value={horario} />
-                                    ))}
-                                </Picker>
+                            <Picker
+                                selectedValue={horarioSelecionado}
+                                onValueChange={handleHorarioChange}
+                                style={styles.picker}
+                            >
+                                {Array.isArray(horariosDisponiveis) && horariosDisponiveis.length > 0 ? (
+                                    horariosDisponiveis.map((horario, index) => {
+                                        console.log('Adicionando horário ao Picker:', horario);
+                                        return <Picker.Item key={index} label={horario} value={horario} />;
+                                    })
+                                ) : (
+                                    <Picker.Item label="Sem horários disponíveis" value="" />
+                                )}
+                            </Picker>
+
                                 <TouchableOpacity onPress={() => setShowPickerModal(false)} style={styles.closeButton}>
                                     <Text style={styles.closeButtonText}>Fechar</Text>
                                 </TouchableOpacity>
