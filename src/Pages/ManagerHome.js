@@ -54,25 +54,44 @@ export default function ManagerHome({ navigation }) {
   // Função para buscar o faturamento diário dos barbeiros com base na data selecionada
   const getFaturamentoBarbeiros = async (date = selectedDate) => {
     try {
-      const hoje = dayjs(date).format('YYYY-MM-DD');
+      const hoje = dayjs(date).format('DD-MM-YYYY');
+      console.log('Data selecionada para faturamento:', hoje); // Verificação da data
+  
+      // Buscar todos os faturamentos
       const faturamentoRef = collection(database, "faturamento_diario");
       const faturamentoSnap = await getDocs(faturamentoRef);
       const faturamentoList = faturamentoSnap.docs
-      .filter(doc => doc.id.includes(hoje)) // Filtra pelo dia atual
-      .map((doc) => ({
-        ...doc.data(),
-        id: doc.id,
-      }));
-      setFaturamentoBarbeiros(faturamentoList);
-      console.log(faturamentoList);
+        .filter(doc => doc.id.includes(hoje)) // Filtra pelo dia atual
+        .map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
+  
+      // Adicionar faturamento 0 para barbeiros sem faturamento
+      const faturamentoMap = new Map();
+      faturamentoList.forEach(f => faturamentoMap.set(f.id.split('_')[0], f));
+  
+      const faturamentoCompleto = barbeiros.map(barbeiro => {
+        const faturamentoDoBarbeiro = faturamentoMap.get(barbeiro.id) || { faturamento: 0 };
+        return {
+          ...faturamentoDoBarbeiro,
+          id: barbeiro.id,
+          nome: barbeiro.nome,
+        };
+      });
+  
+      setFaturamentoBarbeiros(faturamentoCompleto);
+      console.log(faturamentoCompleto);
     } catch (error) {
       console.error("Erro ao buscar o faturamento diário dos barbeiros: ", error);
     }
   };
+  
+  
 
   const encerrarExpediente = async () => {
     try {
-      const hoje = dayjs().format('YYYY-MM-DD');
+      const hoje = dayjs().format('DD-MM-YYYY');
       for (const barbeiro of faturamentoBarbeiros) {
         const faturamentoRef = doc(database, "faturamento_diario", barbeiro.id);
         await setDoc(faturamentoRef, { data: hoje, faturamento: 0 }, { merge: true });
@@ -194,32 +213,40 @@ export default function ManagerHome({ navigation }) {
           <View style={styles.faturamentoContainer}>
             <Text style={styles.faturamentoTitle}>Faturamento Diário dos Barbeiros</Text>
             {faturamentoBarbeiros.length > 0 ? (
-              faturamentoBarbeiros.map((barbeiro) => (
-                <View key={barbeiro.id} style={styles.faturamentoItem}>
-                  {barbeiros.find((b) => b.id === barbeiro.id.split('_')[0]) && ( // Ajusta o barbeiro pelo ID
+              faturamentoBarbeiros.map((barbeiro) => {
+                const barbeiroEncontrado = barbeiros.find((b) => b.id === barbeiro.id.split('_')[0]);
+                const nomeBarbeiro = barbeiroEncontrado ? barbeiroEncontrado.nome : 'Barbeiro não encontrado';
+
+                return (
+                  <View key={barbeiro.id} style={styles.faturamentoItem}>
                     <View>
                       <Text style={styles.faturamentoText}>
-                        {barbeiros.find((b) => b.id === barbeiro.id.split('_')[0]).nome}
+                        {nomeBarbeiro}
                       </Text>
-                      {Object.entries(barbeiro.faturamento || {}).map(([metodo, valor]) => (
-                        <Text key={metodo} style={styles.faturamentoText}>
-                          {metodo}: R$ {valor.toFixed(2)}
+                      {Object.entries(barbeiro.faturamento || {}).length > 0 ? (
+                        Object.entries(barbeiro.faturamento).map(([metodo, valor]) => (
+                          <Text key={metodo} style={styles.faturamentoText}>
+                            {metodo}: R$ {valor.toFixed(2)}
+                          </Text>
+                        ))
+                      ) : (
+                        <Text style={styles.faturamentoText}>
+                          Faturamento: R$ 0.00
                         </Text>
-                      ))}
+                      )}
                     </View>
-                  )}
-                </View>
-              ))
+                  </View>
+                );
+              })
             ) : (
               <Text style={styles.noAgendamentoText}>Nenhum faturamento encontrado</Text>
             )}
           </View>
 
 
-
-          <TouchableOpacity onPress={encerrarExpediente} style={styles.button}>
+          {/*<TouchableOpacity onPress={encerrarExpediente} style={styles.button}>
             <Text style={styles.buttonText}>Encerrar expediente</Text>
-          </TouchableOpacity>
+          </TouchableOpacity>*/}
 
 
           {/* Lista de Agendamentos */}

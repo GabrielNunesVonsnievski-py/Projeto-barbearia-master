@@ -246,8 +246,8 @@ export default function Agendamento({ navigation }) {
   const IntervalodeTempo = () => {
     const intervaloTempo = [];
     const horarioInicio = dayjs().hour(8).minute(0); // horário de início: 08:00
-    const horarioFinal = dayjs().hour(18).minute(0); // horário final: 18:00
-    const horarioAtual = dayjs(); // horário atual para referência
+    const horarioFinal = dayjs().hour(18).minute(0); 
+    const horarioAtual = dayjs(); 
   
     let currentTime = horarioInicio;
   
@@ -258,13 +258,13 @@ export default function Agendamento({ navigation }) {
           intervaloTempo.push(currentTime.format('HH:mm'));
         }
       } else {
-        // Para outros dias adiciona todos os horários
+        // para outros dias adiciona todos os horários
         if (currentTime.hour() !== 12) {
           intervaloTempo.push(currentTime.format('HH:mm'));
         }
       }
   
-      currentTime = currentTime.add(30, 'minute'); // incrementa 30 minutos
+      currentTime = currentTime.add(30, 'minute');
     }
   
     return intervaloTempo;
@@ -287,7 +287,6 @@ export default function Agendamento({ navigation }) {
     useEffect(() => {
       const updateHorariosDisponiveis = () => {
         if (dayjs(date).isSame(dayjs(), 'day')) { 
-          // Se a data selecionada for o dia atual
           const horarioAtual = dayjs();
           const horariosFiltrados = IntervalodeTempo().filter(horario => {
             return dayjs(horario, 'HH:mm').isAfter(horarioAtual); // filtra horários após o atual

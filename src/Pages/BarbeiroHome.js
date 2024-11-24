@@ -220,24 +220,77 @@ export default function BarbeiroHome({ navigation }) {
 
   const isAgendamentoPassado = (data, hora) => {
     try {
-      // Formata a data no padrão esperado e cria o objeto completo de agendamento
-      const [dia, mes, ano] = data.split('-'); // divide o formato DD-MM-YYYY
-      const [horas, minutos] = hora.split(':'); 
-  
-      // Cria um objeto Date diretamente no formato ISO
-      const dataAgendamento = new Date(ano, mes - 1, dia, horas, minutos);
-      const agora = new Date(); 
-  
-      console.log('Data do Agendamento:', dataAgendamento.toISOString());
-      console.log('Agora:', agora.toISOString());
-  
-      // retorna verdadeiro se o agendamento já passou
-      return dataAgendamento < agora;
+        console.log('Data recebida:', data);
+        console.log('Hora recebida:', hora);
+
+        // Verifica se os parâmetros estão presentes
+        if (!data || !hora) {
+            throw new Error('Data ou hora estão ausentes.');
+        }
+
+        // Ajusta o formato da hora caso necessário (exemplo: 1330 -> 13:30)
+        if (!hora.includes(':') && hora.length === 4) {
+            hora = `${hora.slice(0, 2)}:${hora.slice(2)}`;
+        }
+
+        // Divide a hora em partes e valida o formato HH:mm
+        const [horaStr, minutoStr] = hora.split(':');
+        const horas = parseInt(horaStr, 10);
+        const minutos = parseInt(minutoStr, 10);
+
+        if (
+            isNaN(horas) || isNaN(minutos) ||
+            horas < 0 || horas > 23 ||
+            minutos < 0 || minutos > 59
+        ) {
+            throw new Error('Hora no formato inválido. Use HH:mm.');
+        }
+
+        // Divide a data no formato DD-MM-YYYY
+        const [diaStr, mesStr, anoStr] = data.split('-');
+        const dia = parseInt(diaStr, 10);
+        const mes = parseInt(mesStr, 10) - 1; // O mês no objeto Date começa em 0
+        const ano = parseInt(anoStr, 10);
+
+        // Verifica se os valores da data são válidos
+        if (
+            isNaN(dia) || isNaN(mes) || isNaN(ano) ||
+            mes < 0 || mes > 11 ||
+            dia < 1 || dia > 31
+        ) {
+            throw new Error('Data no formato inválido. Use DD-MM-YYYY.');
+        }
+
+        // Cria o objeto Date do agendamento
+        const dataAgendamento = new Date(ano, mes, dia, horas, minutos);
+
+        // Verifica se a data gerada é válida
+        if (isNaN(dataAgendamento.getTime())) {
+            throw new Error('Data gerada é inválida.');
+        }
+
+        // Validação adicional: Verifica se a data realmente existe no calendário
+        if (dataAgendamento.getDate() !== dia) {
+            throw new Error('Data inválida (exemplo: 31 de fevereiro).');
+        }
+
+        // Obtém a data e hora atuais
+        const agora = new Date();
+
+        console.log('Data do Agendamento:', dataAgendamento.toString());
+        console.log('Agora:', agora.toString());
+
+        // Retorna verdadeiro se o agendamento já passou
+        return dataAgendamento < agora;
+
     } catch (error) {
-      console.error('Erro ao verificar se o agendamento já passou:', error);
-      return false; // retorna falso em caso de erro
+        //console.error('Erro ao verificar se o agendamento já passou:', error.message);
+        return false; // Retorna falso em caso de erro
     }
-  };
+};
+
+
+
 
   if (isLoading) {
     return <Loading />;
