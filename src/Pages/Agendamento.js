@@ -254,12 +254,12 @@ export default function Agendamento({ navigation }) {
     while (currentTime.isBefore(horarioFinal)) {
       // filtra horários já passados no dia atual
       if (dayjs(date).isSame(horarioAtual, 'day')) {
-        if (currentTime.isAfter(horarioAtual) && currentTime.hour() !== 12) {
+        if (currentTime.isAfter(horarioAtual) && currentTime.hour() !== 8 && currentTime.hour() !== 12) {
           intervaloTempo.push(currentTime.format('HH:mm'));
         }
       } else {
         // para outros dias adiciona todos os horários
-        if (currentTime.hour() !== 12) {
+        if (currentTime.hour() !== 12 && currentTime.hour() !== 8) {
           intervaloTempo.push(currentTime.format('HH:mm'));
         }
       }
