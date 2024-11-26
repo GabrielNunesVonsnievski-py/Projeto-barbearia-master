@@ -9,7 +9,7 @@ import Loading from './Loading';
 export default function Details({ navigation, route }) {
     const [isLoading, setIsLoading] = useState(true);
     const [horarioEdit, setHorarioEdit] = useState(route.params.hora ? new Date(route.params.hora) : new Date());
-    const [dataEdit, setDataEdit] = useState(route.params.data ? new Date(route.params.data) : new Date());
+    const [dataEdit, setDataEdit] = useState(new Date()); 
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [horariosDisponiveis, setHorariosDisponiveis] = useState([]);
     const [horarioSelecionado, setHorarioSelecionado] = useState('');
